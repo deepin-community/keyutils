@@ -46,10 +46,13 @@ static const char key_type[] = "dns_resolver";
 static const char a_query_type[] = "a";
 static const char aaaa_query_type[] = "aaaa";
 static const char afsdb_query_type[] = "afsdb";
+static const char *config_file = "/etc/keyutils/key.dns_resolver.conf";
+static bool config_specified = false;
 key_serial_t key;
 static int verbose;
 int debug_mode;
 unsigned mask = INET_ALL;
+unsigned int key_expiry = 5;
 
 
 /*
@@ -101,6 +104,23 @@ void _error(const char *fmt, ...)
 		fputc('\n', stderr);
 	} else {
 		vsyslog(LOG_ERR, fmt, va);
+	}
+	va_end(va);
+}
+
+/*
+ * Print a warning to stderr or the syslog
+ */
+void warning(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	if (isatty(2)) {
+		vfprintf(stderr, fmt, va);
+		fputc('\n', stderr);
+	} else {
+		vsyslog(LOG_WARNING, fmt, va);
 	}
 	va_end(va);
 }
@@ -272,6 +292,7 @@ void dump_payload(void)
 	}
 
 	info("The key instantiation data is '%s'", buf);
+	info("The expiry time is %us", key_expiry);
 	free(buf);
 }
 
@@ -412,11 +433,165 @@ int dns_query_a_or_aaaa(const char *hostname, char *options)
 
 	/* load the key with data key */
 	if (!debug_mode) {
+		ret = keyctl_set_timeout(key, key_expiry);
+		if (ret == -1)
+			error("%s: keyctl_set_timeout: %m", __func__);
 		ret = keyctl_instantiate_iov(key, payload, payload_index, 0);
 		if (ret == -1)
 			error("%s: keyctl_instantiate: %m", __func__);
 	}
 
+	exit(0);
+}
+
+/*
+ * Read the config file.
+ */
+static void read_config(void)
+{
+	FILE *f;
+	char buf[4096], *b, *p, *k, *v;
+	unsigned int line = 0, u;
+	int n;
+
+	info("READ CONFIG %s", config_file);
+
+	f = fopen(config_file, "r");
+	if (!f) {
+		if (errno == ENOENT && !config_specified) {
+			debug("%s: %m", config_file);
+			return;
+		}
+		error("%s: %m", config_file);
+	}
+
+	while (fgets(buf, sizeof(buf) - 1, f)) {
+		line++;
+
+		/* Trim off leading and trailing spaces and discard whole-line
+		 * comments.
+		 */
+		b = buf;
+		while (isspace(*b))
+			b++;
+		if (!*b || *b == '#')
+			continue;
+		p = strchr(b, '\n');
+		if (!p)
+			error("%s:%u: line missing newline or too long", config_file, line);
+		while (p > buf && isspace(p[-1]))
+			p--;
+		*p = 0;
+
+		/* Split into key[=value] pairs and trim spaces. */
+		k = b;
+		v = NULL;
+		b = strchr(b, '=');
+		if (b) {
+			char quote = 0;
+			bool esc = false;
+
+			if (b == k)
+				error("%s:%u: Unspecified key",
+				      config_file, line);
+
+			/* NUL-terminate the key. */
+			for (p = b - 1; isspace(*p); p--)
+				;
+			p[1] = 0;
+
+			/* Strip leading spaces */
+			b++;
+			while (isspace(*b))
+				b++;
+			if (!*b)
+				goto missing_value;
+
+			if (*b == '"' || *b == '\'') {
+				quote = *b;
+				b++;
+			}
+			v = p = b;
+			while (*b) {
+				if (esc) {
+					switch (*b) {
+					case ' ':
+					case '\t':
+					case '"':
+					case '\'':
+					case '\\':
+						break;
+					default:
+						goto invalid_escape_char;
+					}
+					esc = false;
+					*p++ = *b++;
+					continue;
+				}
+				if (*b == '\\') {
+					esc = true;
+					b++;
+					continue;
+				}
+				if (*b == quote) {
+					b++;
+					if (*b)
+						goto post_quote_data;
+					quote = 0;
+					break;
+				}
+				if (!quote && *b == '#')
+					break; /* Terminal comment */
+				*p++ = *b++;
+			}
+
+			if (esc)
+				error("%s:%u: Incomplete escape", config_file, line);
+			if (quote)
+				error("%s:%u: Unclosed quotes", config_file, line);
+			*p = 0;
+		}
+
+		if (strcmp(k, "default_ttl") == 0) {
+			if (!v)
+				goto missing_value;
+			if (sscanf(v, "%u%n", &u, &n) != 1)
+				goto bad_value;
+			if (v[n])
+				goto extra_data;
+			if (u < 1 || u > INT_MAX)
+				goto out_of_range;
+			key_expiry = u;
+		} else {
+			warning("%s:%u: Unknown option '%s'", config_file, line, k);
+		}
+	}
+
+	if (ferror(f) || fclose(f) == EOF)
+		error("%s: %m", config_file);
+	return;
+
+missing_value:
+	error("%s:%u: %s: Missing value", config_file, line, k);
+invalid_escape_char:
+	error("%s:%u: %s: Invalid char in escape", config_file, line, k);
+post_quote_data:
+	error("%s:%u: %s: Data after closing quote", config_file, line, k);
+bad_value:
+	error("%s:%u: %s: Bad value", config_file, line, k);
+extra_data:
+	error("%s:%u: %s: Extra data supplied", config_file, line, k);
+out_of_range:
+	error("%s:%u: %s: Value out of range", config_file, line, k);
+}
+
+/*
+ * Dump the configuration after parsing the config file.
+ */
+static __attribute__((noreturn))
+void config_dumper(void)
+{
+	printf("default_ttl = %u\n", key_expiry);
 	exit(0);
 }
 
@@ -428,22 +603,24 @@ void usage(void)
 {
 	if (isatty(2)) {
 		fprintf(stderr,
-			"Usage: %s [-vv] key_serial\n",
+			"Usage: %s [-vv] [-c config] key_serial\n",
 			prog);
 		fprintf(stderr,
-			"Usage: %s -D [-vv] <desc> <calloutinfo>\n",
+			"Usage: %s -D [-vv] [-c config] <desc> <calloutinfo>\n",
 			prog);
 	} else {
-		info("Usage: %s [-vv] key_serial", prog);
+		info("Usage: %s [-vv] [-c config] key_serial", prog);
 	}
 	exit(2);
 }
 
-const struct option long_options[] = {
-	{ "debug",	0, NULL, 'D' },
-	{ "verbose",	0, NULL, 'v' },
-	{ "version",	0, NULL, 'V' },
-	{ NULL,		0, NULL, 0 }
+static const struct option long_options[] = {
+	{ "config",		0, NULL, 'c' },
+	{ "debug",		0, NULL, 'D' },
+	{ "dump-config",	0, NULL, 2   },
+	{ "verbose",		0, NULL, 'v' },
+	{ "version",		0, NULL, 'V' },
+	{ NULL,			0, NULL, 0 }
 };
 
 /*
@@ -455,11 +632,19 @@ int main(int argc, char *argv[])
 	char *keyend, *p;
 	char *callout_info = NULL;
 	char *buf = NULL, *name;
+	bool dump_config = false;
 
 	openlog(prog, 0, LOG_DAEMON);
 
-	while ((ret = getopt_long(argc, argv, "vDV", long_options, NULL)) != -1) {
+	while ((ret = getopt_long(argc, argv, "c:vDV", long_options, NULL)) != -1) {
 		switch (ret) {
+		case 'c':
+			config_file = optarg;
+			config_specified = true;
+			continue;
+		case 2:
+			dump_config = true;
+			continue;
 		case 'D':
 			debug_mode = 1;
 			continue;
@@ -481,6 +666,9 @@ int main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+	read_config();
+	if (dump_config)
+		config_dumper();
 
 	if (!debug_mode) {
 		if (argc != 1)
@@ -542,7 +730,7 @@ int main(int argc, char *argv[])
 	name++;
 
 	info("Query type: '%*.*s'", qtlen, qtlen, keyend);
-	
+
 	if ((qtlen == sizeof(a_query_type) - 1 &&
 	     memcmp(keyend, a_query_type, sizeof(a_query_type) - 1) == 0) ||
 	    (qtlen == sizeof(aaaa_query_type) - 1 &&

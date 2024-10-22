@@ -13,16 +13,14 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD SANDBOX KEYRING"
-create_keyring sandbox @s
-expect_keyid sandbox
+create_keyring --new=sandbox sandbox @s
 
 # create a bunch of nested keyrings in the sandbox
 marker "ADD NESTED KEYRINGS"
 declare -a ring
 for ((i=0; i<=16; i++))
 do
-    create_keyring ring$i $sandbox
-    expect_keyid "ring[$i]"
+    create_keyring --new="ring[$i]" ring$i $sandbox
 done
 
 # create a key in each of those keyrings
@@ -30,9 +28,9 @@ marker "ADD KEYS"
 keys=""
 for ((i=0; i<=16; i++))
 do
-    create_key user a$i a ${ring[$i]}
-    expect_keyid id
+    create_key --new=id user a$i a ${ring[$i]}
     keys="$keys $id"
+    keyid[$i]=$id
 done
 
 # search for the added keys, beginning at sandbox and exercising the nesting
@@ -40,9 +38,8 @@ marker "SEARCH KEYS"
 keys2=""
 for ((i=0; i<=16; i++))
 do
-    search_for_key $sandbox user a$i
-    expect_keyid id
-    keys2="$keys2 $id"
+    search_for_key --expect=${keyid[$i]} $sandbox user a$i
+    keys2="$keys2 ${keyid[$i]}"
 done
 
 marker "COMPARE KEY LISTS"

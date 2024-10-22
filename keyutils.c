@@ -244,11 +244,11 @@ long keyctl_dh_compute(key_serial_t priv, key_serial_t prime,
 	return keyctl(KEYCTL_DH_COMPUTE, &params, buffer, buflen, 0);
 }
 
-long keyctl_dh_compute_kdf(key_serial_t private, key_serial_t prime,
+long keyctl_dh_compute_kdf(key_serial_t priv, key_serial_t prime,
 			   key_serial_t base, char *hashname, char *otherinfo,
 			   size_t otherinfolen, char *buffer, size_t buflen)
 {
-	struct keyctl_dh_params params = { .priv = private,
+	struct keyctl_dh_params params = { .priv = priv,
 					   .prime = prime,
 					   .base = base };
 	struct keyctl_kdf_params kdfparams = { .hashname = hashname,
@@ -383,6 +383,11 @@ long keyctl_capabilities(unsigned char *buffer, size_t buflen)
 	}
 
 	return sizeof(unsigned char);
+}
+
+long keyctl_watch_key(key_serial_t id, int watch_queue_fd, int watch_id)
+{
+	return keyctl(KEYCTL_WATCH_KEY, id, watch_queue_fd, watch_id);
 }
 
 /*****************************************************************************/

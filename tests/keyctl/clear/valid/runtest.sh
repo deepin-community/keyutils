@@ -11,8 +11,7 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # validate the new keyring's name and type
 marker "VALIDATE KEYRING"
@@ -35,8 +34,7 @@ expect_keyring_rlist rlist empty
 
 # stick a key in the keyring
 marker "ADD KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # check that we can list it
 marker "LIST KEYRING WITH ONE"
@@ -57,8 +55,7 @@ marker "ADD FORTY KEYS"
 keys=""
 for ((i=0; i<40; i++))
   do
-  create_key user lizard$i gizzard$i $keyringid
-  expect_keyid x
+  create_key --new=x user lizard$i gizzard$i $keyringid
   keys="$keys $x"
   list_keyring $keyringid
   expect_keyring_rlist rlist $x
@@ -78,7 +75,7 @@ then
 fi
 
 # clear the keyring
-marker "CLEAR KEYRING WITH ONE"
+marker "CLEAR KEYRING WITH MANY"
 clear_keyring $keyringid
 
 # check that it's now empty yet again

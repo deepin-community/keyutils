@@ -11,7 +11,7 @@ Subject: Tests for KEYCTL_MOVE require kernel 5.3 or above
  5 files changed, 33 insertions(+)
 
 diff --git a/tests/keyctl/move/bad-args/runtest.sh b/tests/keyctl/move/bad-args/runtest.sh
-index 8ce62ff..f8c4243 100644
+index b1c7e66..ff67c60 100644
 --- a/tests/keyctl/move/bad-args/runtest.sh
 +++ b/tests/keyctl/move/bad-args/runtest.sh
 @@ -6,6 +6,12 @@
@@ -45,7 +45,7 @@ index 29a91f1..e42b00b 100644
  echo "++++ BEGINNING TEST" >$OUTPUTFILE
  
 diff --git a/tests/keyctl/move/recursion/runtest.sh b/tests/keyctl/move/recursion/runtest.sh
-index 1e68963..ed3030b 100644
+index 36cd5cb..920f075 100644
 --- a/tests/keyctl/move/recursion/runtest.sh
 +++ b/tests/keyctl/move/recursion/runtest.sh
 @@ -6,6 +6,12 @@
@@ -62,7 +62,7 @@ index 1e68963..ed3030b 100644
  echo "++++ BEGINNING TEST" >$OUTPUTFILE
  
 diff --git a/tests/keyctl/move/valid/runtest.sh b/tests/keyctl/move/valid/runtest.sh
-index 73bf7c2..b0a0976 100644
+index 31b51d7..5be2124 100644
 --- a/tests/keyctl/move/valid/runtest.sh
 +++ b/tests/keyctl/move/valid/runtest.sh
 @@ -6,6 +6,12 @@
@@ -79,18 +79,18 @@ index 73bf7c2..b0a0976 100644
  echo "++++ BEGINNING TEST" >$OUTPUTFILE
  
 diff --git a/tests/prepare.inc.sh b/tests/prepare.inc.sh
-index 83556c8..7f1536b 100644
+index 5ca629d..52ec52c 100644
 --- a/tests/prepare.inc.sh
 +++ b/tests/prepare.inc.sh
-@@ -74,6 +74,7 @@ have_key_invalidate=0
- have_big_key_type=0
+@@ -97,6 +97,7 @@ have_big_key_type=0
  have_dh_compute=0
  have_restrict_keyring=0
+ have_notify=0
 +have_move_keys=0
  
  if keyctl supports capabilities >&/dev/null
  then
-@@ -112,6 +113,14 @@ else
+@@ -135,6 +136,14 @@ else
      then
  	have_restrict_keyring=1
      fi

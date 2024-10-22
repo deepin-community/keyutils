@@ -11,13 +11,11 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # stick a key in the keyring
 marker "ADD KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # check that we can list it
 marker "LIST KEYRING WITH ONE"
@@ -55,8 +53,7 @@ expect_error ENOENT
 
 # Create a conflicting key and try to have an unforced move displace it
 marker "ADD KEY 2"
-create_key user lizard gizzard @s
-expect_keyid keyid2
+create_key --new=keyid2 user lizard gizzard @s
 
 marker "MOVE KEY 5"
 move_key --fail $keyid $keyringid @s
@@ -100,8 +97,7 @@ expect_error ENOKEY
 
 ###############################################################################
 # Create a second keyring in the first
-create_keyring "zebra" $keyringid
-expect_keyid keyring2id
+create_keyring --new=keyring2id "zebra" $keyringid
 
 # Move thrice between the session keyring and back
 marker "LINK 2ND KEYRING TO SESSION"
@@ -142,13 +138,11 @@ expect_error ENOKEY
 
 ###############################################################################
 # Create a second keyring in the session keyring
-create_keyring "zebra" @s
-expect_keyid keyring2id
+create_keyring --new=keyring2id "zebra" @s
 
 # Add a key to the session keyring and link it into each keyring
 marker "ADD KEY 3"
-create_key user lizard gizzard @s
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard @s
 
 marker "LINK KEY"
 link_key $keyid $keyringid

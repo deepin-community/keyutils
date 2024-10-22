@@ -386,13 +386,11 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring for CA keys
 marker "ADD CA KEYRING"
-create_keyring ca @s
-expect_keyid cakeyring
+create_keyring --new=cakeyring ca @s
 
 # create a keyring using the keys in user CA for validation
 marker "ADD RESTRICTED USER KEYRING (parent keyring)"
-create_keyring rbkr @s
-expect_keyid restricted_by_keyring
+create_keyring --new=restricted_by_keyring rbkr @s
 restrict_keyring $restricted_by_keyring "asymmetric" "key_or_keyring:$cakeyring"
 
 # verify cycle detection
@@ -405,14 +403,12 @@ restrict_keyring --fail $restricted_by_keyring "asymmetric" "builtin_trusted"
 
 # create a keyring using the keys in builtin CA for validation
 marker "ADD RESTRICTED BUILTIN KEYRING"
-create_keyring rbb @s
-expect_keyid restricted_by_builtin
+create_keyring --new=restricted_by_builtin rbb @s
 restrict_keyring $restricted_by_builtin "asymmetric" "builtin_trusted"
 
 # add CA certificate to CA keyring
 marker "ADD USER SIGNED CERT"
-pcreate_key "-e $cacert1" asymmetric "" $cakeyring
-expect_keyid cacert1id
+pcreate_key --new=cacert1id "-e $cacert1" asymmetric "" $cakeyring
 
 # attempt validation of signed key
 marker "REJECT KEY SIGNED BY UNKNOWN CA"
@@ -424,19 +420,16 @@ pcreate_key --fail "-e $signed" asymmetric "" $restricted_by_builtin
 
 # add another CA certificate to CA keyring
 marker "ADD SECOND CA KEY"
-pcreate_key "-e $cacert2" asymmetric "" $cakeyring
-expect_keyid cacert2id
+pcreate_key --new=cacert2id "-e $cacert2" asymmetric "" $cakeyring
 
 # create a keyring restricted on a single key
 marker "ADD RESTRICTED USER KEYRING (parent key)"
-create_keyring rbk @s
-expect_keyid restricted_by_key
+create_keyring --new=restricted_by_key rbk @s
 restrict_keyring $restricted_by_key "asymmetric" "key_or_keyring:$cacert2id"
 
 # attempt validation of signed key
 marker "ADD KEY SIGNED BY KNOWN CA"
-pcreate_key "-e $signed" asymmetric "" $restricted_by_keyring
-expect_keyid signedid
+pcreate_key --new=signedid "-e $signed" asymmetric "" $restricted_by_keyring
 link_key $signedid $restricted_by_key
 
 # confirm that self-signed key cannot be added
@@ -450,10 +443,8 @@ restrict_keyring --fail $restricted_by_key "asymmetric" "builtin_trusted"
 
 # create two self-restricted keyrings
 marker "ADD USER KEYRINGS (self)"
-create_keyring rbs1 @s
-expect_keyid restricted_by_self1
-create_keyring rbs2 @s
-expect_keyid restricted_by_self2
+create_keyring --new=restricted_by_self1 rbs1 @s
+create_keyring --new=restricted_by_self2 rbs2 @s
 
 # add first certificate (treated as root cert) to self-restricted keyrings
 marker "ADD FIRST CERT TO SELF-RESTRICTED KEYRINGS"
@@ -477,15 +468,12 @@ link_key $signedid $restricted_by_self2
 
 # check certificate signed using an intermediate CA
 marker "ADD INTERMEDIATE SIGNED CERT TO SELF-RESTRICTED KEYRING"
-pcreate_key "-e $intcert" asymmetric "" $restricted_by_self2
-expect_keyid intcertid
-pcreate_key "-e $intsigned" asymmetric "" $restricted_by_self2
-expect_keyid intsignedid
+pcreate_key --new=intcertid "-e $intcert" asymmetric "" $restricted_by_self2
+pcreate_key --new=intsignedid "-e $intsigned" asymmetric "" $restricted_by_self2
 
 # check intermediate CA with a parent keyring when CA is missing
 marker "REJECT INTERMEDIATE SIGNED CERT WITHOUT INTERMEDIATE CA"
-create_keyring restricted_by_int @s
-expect_keyid restricted_by_int
+create_keyring --new=restricted_by_int restricted_by_int @s
 restrict_keyring $restricted_by_int "asymmetric" "key_or_keyring:$cakeyring:chain"
 link_key --fail $intsignedid $restricted_by_int
 
@@ -496,8 +484,7 @@ link_key $intsignedid $restricted_by_int
 
 # create a fully-restricted keyring (no links allowed)
 marker "ADD FULLY-RESTRICTED KEYRING"
-create_keyring fr @s
-expect_keyid fully_restricted
+create_keyring --new=fully_restricted fr @s
 link_key $cacert2id $fully_restricted
 restrict_keyring $fully_restricted
 

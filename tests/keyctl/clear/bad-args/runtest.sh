@@ -16,8 +16,7 @@ expect_error EINVAL
 
 # create a non-keyring
 marker "CREATE KEY"
-create_key user lizard gizzard @s
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard @s
 
 # check that a non-keyring ID fails correctly
 marker "CHECK CLEAR NON-KEYRING KEY"

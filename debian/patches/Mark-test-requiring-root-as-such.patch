@@ -1,0 +1,41 @@
+From: Christian Kastner <ckk@kvr.at>
+Date: Sun, 19 Jun 2022 21:08:58 +0200
+Subject: Mark test requiring root as such
+
+---
+ tests/features/builtin_trusted/runtest.sh | 5 +++++
+ tests/features/limits/runtest.sh          | 5 +++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/tests/features/builtin_trusted/runtest.sh b/tests/features/builtin_trusted/runtest.sh
+index 27910b5..f7d20ca 100644
+--- a/tests/features/builtin_trusted/runtest.sh
++++ b/tests/features/builtin_trusted/runtest.sh
+@@ -3,6 +3,11 @@
+ . ../../prepare.inc.sh
+ . ../../toolbox.inc.sh
+ 
++if [ $skip_root_required = 1 ]
++then
++    toolbox_skip_test $TEST "SKIPPING TEST REQUIRING ROOT"
++    exit 0
++fi
+ 
+ # ---- do the actual testing ----
+ 
+diff --git a/tests/features/limits/runtest.sh b/tests/features/limits/runtest.sh
+index 3af2f5a..9a728b0 100644
+--- a/tests/features/limits/runtest.sh
++++ b/tests/features/limits/runtest.sh
+@@ -3,6 +3,11 @@
+ . ../../prepare.inc.sh
+ . ../../toolbox.inc.sh
+ 
++if [ $skip_root_required = 1 ]
++then
++	toolbox_skip_test $TEST "SKIPPING TEST REQUIRING ROOT"
++	exit 0
++fi
+ 
+ # ---- do the actual testing ----
+ 

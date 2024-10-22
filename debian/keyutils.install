@@ -1,6 +1,6 @@
-bin
 etc
-sbin
+usr/bin
+usr/sbin
 usr/share/keyutils
 usr/share/man/man1
 usr/share/man/man5

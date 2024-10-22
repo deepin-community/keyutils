@@ -36,12 +36,10 @@ expect_error EINVAL
 
 # create a pair of non-keyrings
 marker "CREATE KEY"
-create_key user lizard gizzard @s
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard @s
 
 marker "CREATE KEY2"
-create_key user zebra stripes @s
-expect_keyid keyid2
+create_key --new=keyid2 user zebra stripes @s
 
 # check that linking to a non-keyring ID fails correctly
 marker "CHECK MOVE FROM NON-KEYRING KEY"

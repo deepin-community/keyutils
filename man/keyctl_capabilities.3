@@ -29,7 +29,7 @@ of the amount of buffer space available.  If the buffer is shorter than the
 data, a short copy will be made; if the buffer is larger than the data, the
 excess space will be cleared.
 .P
-If this operation is not available in the kernel, the keyutils library will be
+If this operation is not available in the kernel, the keyutils library will
 emulate it as best it can and the capability bit that indicates if the kernel
 operation is available will be cleared.
 .P
@@ -73,6 +73,20 @@ otherwise.  See
 This is set if the kernel supports the move key operation and cleared
 otherwise.  See
 .BR keyctl_move ( 3 ).
+.P
+In
+.IR buffer[1] ,
+the following capabilities exist:
+.TP
+.B KEYCTL_CAPS1_NS_KEYRING_NAME
+This is set if the keyring names are segregated according to the user-namespace
+in which a keyring is created.
+.TP
+.B KEYCTL_CAPS1_NS_KEY_TAG
+This is set if a key or keyring may get tagged with a namespace, thereby
+allowing multiple keys with the same type and description, but different
+namespace tags, to coexist within the same keyring.  Tagging may be automatic
+depending on the key type.  Only network-namespace tagging is currently used.
 .P
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH RETURN VALUE

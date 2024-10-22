@@ -37,8 +37,6 @@
  */
 #include "key.dns.h"
 
-static unsigned long afs_ttl = ULONG_MAX;
-
 /*
  *
  */
@@ -114,8 +112,8 @@ static void afsdb_hosts_to_addrs(ns_msg handle, ns_sect section)
 		}
 	}
 
-	afs_ttl = ttl;
-	info("ttl: %u", ttl);
+	key_expiry = ttl;
+	info("ttl: %u", key_expiry);
 }
 
 /*
@@ -203,8 +201,8 @@ static void srv_hosts_to_addrs(ns_msg handle, ns_sect section)
 		}
 	}
 
-	afs_ttl = ttl;
-	info("ttl: %u", ttl);
+	key_expiry = ttl;
+	info("ttl: %u", key_expiry);
 }
 
 /*
@@ -240,7 +238,7 @@ static int dns_query_AFSDB(const char *cell)
 	/* look up the hostnames we've obtained to get the actual addresses */
 	afsdb_hosts_to_addrs(handle, ns_s_an);
 
-	info("DNS query AFSDB RR results:%u ttl:%lu", payload_index, afs_ttl);
+	info("DNS query AFSDB RR results:%u ttl:%u", payload_index, key_expiry);
 	return 0;
 }
 
@@ -279,7 +277,7 @@ static int dns_query_VL_SRV(const char *cell)
 	/* look up the hostnames we've obtained to get the actual addresses */
 	srv_hosts_to_addrs(handle, ns_s_an);
 
-	info("DNS query VL SRV RR results:%u ttl:%lu", payload_index, afs_ttl);
+	info("DNS query VL SRV RR results:%u ttl:%u", payload_index, key_expiry);
 	return 0;
 }
 
@@ -293,7 +291,7 @@ void afs_instantiate(const char *cell)
 
 	/* set the key's expiry time from the minimum TTL encountered */
 	if (!debug_mode) {
-		ret = keyctl_set_timeout(key, afs_ttl);
+		ret = keyctl_set_timeout(key, key_expiry);
 		if (ret == -1)
 			error("%s: keyctl_set_timeout: %m", __func__);
 	}

@@ -18,10 +18,12 @@ for testname in \
 				clear \
 				describing \
 				dh_compute \
+				id \
 				instantiating \
 				invalidate \
 				link \
 				listing \
+				move \
 				newring \
 				noargs \
 				permitting \
@@ -32,9 +34,11 @@ for testname in \
 				search \
 				session \
 				show \
+				supports \
 				timeout \
 				unlink \
-				update
+				update \
+				watch
 do
 	rm -rf keyctl/$testname
 done

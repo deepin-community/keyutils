@@ -11,8 +11,7 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # validate the new keyring's name and type
 marker "VALIDATE KEYRING"
@@ -30,8 +29,7 @@ expect_payload payload "keyring is empty"
 
 # stick a key in the keyring
 marker "ADD KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # check that we can list it
 marker "LIST KEYRING WITH ONE"
@@ -50,8 +48,7 @@ fi
 
 # stick a second key in the keyring
 marker "ADD KEY 2"
-create_key user snake skin $keyringid
-expect_keyid keyid2
+create_key --new=keyid2 user snake skin $keyringid
 
 # check that we can see both keys
 marker "LIST KEYRING WITH TWO"

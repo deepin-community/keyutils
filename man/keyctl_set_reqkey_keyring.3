@@ -66,8 +66,8 @@ and
 .SH RETURN VALUE
 On success
 .BR keyctl_set_reqkey_keyring ()
-returns
-.BR 0 .
+returns the serial number of the keyring which was the previous default for the
+current thread.
 On error, the value
 .B -1
 will be returned and

@@ -12,10 +12,10 @@ Last-Update: 2015-10-07
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index d3e379c..d05374a 100644
+index 211b303..51c3491 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -110,7 +110,8 @@ all: keyctl request-key key.dns_resolver
+@@ -111,7 +111,8 @@ all: keyctl request-key key.dns_resolver cxx
  ###############################################################################
  #RPATH = -Wl,-rpath,$(LIBDIR)
  

@@ -5,10 +5,32 @@ includes=${BASH_SOURCE[0]}
 includes=${includes%/*}/
 
 # --- need to run in own session keyring
-if [ "x`keyctl rdescribe @s | sed 's/.*;//'`" != "xRHTS/keyctl/$$" ]
+watch_fd=0
+if [ "$1" != "--inside-test-session" ]
 then
-    echo "Running with session keyring RHTS/keyctl/$$"
-    exec keyctl session "RHTS/keyctl/$$" bash $0 $@ || exit 8
+    session_name=RHTS/keyctl/$$
+    if keyctl supports notify >&/dev/null
+    then
+	# Create a session keyring and set up a watcher on it.  The watch queue
+	# is exposed on fd 9 inside the child process.
+	echo "Running with watched session keyring $session_name"
+	export watch_log=$PWD/watch.out
+	export gc_log=$PWD/gc.out
+	watch_fd=9
+	echo "starting" >$watch_log
+	echo "starting" >$gc_log
+	exec keyctl watch_session -n $session_name $watch_log $gc_log $watch_fd \
+	     bash $0 --inside-test-session $@ || exit 8
+    else
+	echo "Running with session keyring $session_name"
+	exec keyctl session $session_name bash $0 --inside-test-session $@ || exit 8
+    fi
+else
+    shift
+    if [ "$KEYCTL_WATCH_FD" != "" ]
+    then
+	watch_fd=$KEYCTL_WATCH_FD
+    fi
 fi
 
 # Set up for the Red Hat Test System
@@ -74,6 +96,7 @@ have_key_invalidate=0
 have_big_key_type=0
 have_dh_compute=0
 have_restrict_keyring=0
+have_notify=0
 
 if keyctl supports capabilities >&/dev/null
 then

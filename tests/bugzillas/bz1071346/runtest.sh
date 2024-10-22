@@ -13,13 +13,11 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD SANDBOX KEYRING"
-create_keyring sandbox @s
-expect_keyid sandbox
+create_keyring --new=sandbox sandbox @s
 
 # Add a second keyring of the same name into the sandbox
 marker "ADD SECOND SANDBOX KEYRING"
-create_keyring sandbox $sandbox
-expect_keyid second
+create_keyring --new=second sandbox $sandbox
 
 # Now try and link keyrings together in ways that should fail
 marker "CHECK NO LINK SESSION TO SECOND"
@@ -34,11 +32,9 @@ expect_error EDEADLK
 
 # Add another keyring into sandbox and stick a third sandbox keyring in that
 marker "ADD SIDE KEYRING"
-create_keyring side $sandbox
-expect_keyid side
+create_keyring --new=side side $sandbox
 marker "ADD THIRD SANDBOX KEYRING"
-create_keyring sandbox $side
-expect_keyid third
+create_keyring --new=third sandbox $side
 
 # Make sure we can't link the session keyring, the sandbox, the side
 # keyring or the third keyring itself into the third keyring.

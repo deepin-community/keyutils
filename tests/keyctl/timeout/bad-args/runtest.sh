@@ -16,8 +16,7 @@ expect_error EINVAL
 
 # get a key
 marker "CREATE KEY"
-create_key user a a @s
-expect_keyid keyid
+create_key --new=keyid user a a @s
 
 # dispose of the key so we can use its ID
 marker "DESTROY KEY ID"

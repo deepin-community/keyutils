@@ -11,13 +11,11 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # stick a key in the keyring
 marker "ADD KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # check that we can list it
 marker "LIST KEYRING WITH ONE"
@@ -33,7 +31,7 @@ marker "CHECK NO UNLINK KEY FROM KEYRING"
 unlink_key --fail $keyid $keyringid
 expect_error ENOKEY
 
-# check that the keyring is now empty 
+# check that the keyring is now empty
 marker "LIST KEYRING"
 list_keyring $keyringid
 expect_keyring_rlist rlist empty
@@ -43,8 +41,7 @@ marker "ADD TWENTY KEYS"
 keys=""
 for ((i=0; i<20; i++))
   do
-  create_key user lizard$i gizzard$i $keyringid
-  expect_keyid x
+  create_key --new=x user lizard$i gizzard$i $keyringid
   keys="$keys $x"
   list_keyring $keyringid
   expect_keyring_rlist rlist $x
@@ -53,8 +50,7 @@ done
 marker "ADD TWENTY KEYRINGS"
 for ((i=0; i<20; i++))
   do
-  create_keyring ring$i $keyringid
-  expect_keyid x
+  create_keyring --new=x ring$i $keyringid
   keys="$keys $x"
   list_keyring $keyringid
   expect_keyring_rlist rlist $x
@@ -84,7 +80,7 @@ done
 
 keyctl show
 
-# check that it's now empty 
+# check that it's now empty
 marker "LIST KEYRING"
 list_keyring $keyringid
 expect_keyring_rlist rlist empty

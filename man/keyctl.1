@@ -13,13 +13,15 @@ keyctl \- key management facility control
 .SH SYNOPSIS
 \fBkeyctl\fR \-\-version
 .br
-\fBkeyctl\fR supports [<cap>]
+\fBkeyctl\fR supports [<cap> | --raw]
+.br
+\fBkeyctl\fR id [<keyring>]
 .br
 \fBkeyctl\fR show [\-x] [<keyring>]
 .br
-\fBkeyctl\fR add <type> <desc> <data> <keyring>
+\fBkeyctl\fR add [\-x] <type> <desc> <data> <keyring>
 .br
-\fBkeyctl\fR padd <type> <desc> <keyring>
+\fBkeyctl\fR padd [\-x] <type> <desc> <keyring>
 .br
 \fBkeyctl\fR request <type> <desc> [<dest_keyring>]
 .br
@@ -27,9 +29,9 @@ keyctl \- key management facility control
 .br
 \fBkeyctl\fR prequest2 <type> <desc> [<dest_keyring>]
 .br
-\fBkeyctl\fR update <key> <data>
+\fBkeyctl\fR update [\-x] <key> <data>
 .br
-\fBkeyctl\fR pupdate <key>
+\fBkeyctl\fR pupdate [\-x] <key>
 .br
 \fBkeyctl\fR newring <name> <keyring>
 .br
@@ -67,7 +69,7 @@ keyctl \- key management facility control
 .br
 \fBkeyctl\fR setperm <key> <mask>
 .br
-\fBkeyctl\fR new_session
+\fBkeyctl\fR new_session [<name>]
 .br
 \fBkeyctl\fR session
 .br
@@ -75,9 +77,9 @@ keyctl \- key management facility control
 .br
 \fBkeyctl\fR session <name> [<prog> <arg1> <arg2> ...]
 .br
-\fBkeyctl\fR instantiate <key> <data> <keyring>
+\fBkeyctl\fR instantiate [\-x] <key> <data> <keyring>
 .br
-\fBkeyctl\fR pinstantiate <key> <keyring>
+\fBkeyctl\fR pinstantiate [\-x] <key> <keyring>
 .br
 \fBkeyctl\fR negate <key> <timeout> <keyring>
 .br
@@ -101,7 +103,7 @@ keyctl \- key management facility control
 .br
 \fBkeyctl\fR dh_compute_kdf <private> <prime> <base> <output_length> <hash_type>
 .br
-\fBkeyctl\fR dh_compute_kdf_oi <private> <prime> <base> <output_length> <hash_type>
+\fBkeyctl\fR dh_compute_kdf_oi [\-x] <private> <prime> <base> <output_length> <hash_type>
 .br
 \fBkeyctl\fR pkey_query <key> <pass> [k=v]*
 .br
@@ -112,6 +114,15 @@ keyctl \- key management facility control
 \fBkeyctl\fR pkey_sign <key> <pass> <datafile> [k=v]* ><sigfile>
 .br
 \fBkeyctl\fR pkey_decrypt <key> <pass> <datafile> <sigfile> [k=v]*
+.br
+\fBkeyctl\fR watch [\-f<filters>] <key>
+.br
+\fBkeyctl\fR watch_add <fd> <key>
+.br
+\fBkeyctl\fR watch_rm <fd> <key>
+.br
+\fBkeyctl\fR watch_session [\-f <filters>] [-n <name>] \\
+                <notifylog> <gclog> <fd> <prog> [<arg1> <arg2> ...]
 .SH DESCRIPTION
 This program is used to control the key management facility in various ways
 using a variety of subcommands.
@@ -180,10 +191,14 @@ keyctl from keyutils\-1.5.3 (Built 2011\-08\-24)
 .fi
 .RE
 .SS Query subsystem capabilities
-\fBkeyctl\fR supports [<cap>]
-
+.nf
+\fBkeyctl\fR supports
+\fBkeyctl\fR supports --raw
+\fBkeyctl\fR supports <cap>
+.fi
+.P
 This command can list the available capabilities:
-
+.P
 .RS
 .nf
 $ keyctl supports
@@ -195,7 +210,16 @@ have_public_key=1
 .fi
 .RE
 .P
-And it can query a capability:
+produce a raw hex dump of the capabilities list:
+.P
+.RS
+.nf
+$ keyctl supports --raw
+ff0f
+.fi
+.RE
+.P
+or query a specific capability:
 
 .RS
 .nf
@@ -205,8 +229,8 @@ echo $?
 .fi
 .RE
 
-which returns 0 if the capability is supported, 1 if it isn't and 3 if the
-name is not recognised.  The capabilities supported are:
+which exits 0 if the capability is supported, 1 if it isn't and 3 if the name
+is not recognised.  The capabilities supported are:
 .TP
 .B capabilities
 The kernel supports capability querying.  If not, the other capabilities will
@@ -232,6 +256,24 @@ The kernel supports the restrict_keyring operation.
 .TP
 .B move_key
 The kernel supports the move key operation.
+.TP
+.B ns_keyring_name
+Keyring names are segregated according to the user-namespace in which the
+keyrings are created.
+.TP
+.B ns_key_tag
+Keys can get tagged with namespace tags, allowing keys with the same type and
+description, but different namespaces to coexist in the same keyring.  Tagging
+is done automatically according to the key type.
+
+.SS Show actual key or keyring ID
+\fBkeyctl id [<key>]\fR
+
+This command looks up the real ID of a key or keyring from the identifier
+given, which is typically a symbolic ID such as "@s" indicating the session
+keyring, but can also be a numeric ID or "%type:desc" notation.  If a special
+keyring is specified that isn't created yet, an error will be given rather than
+causing that keyring to be created.
 
 .SS Show process keyrings
 \fBkeyctl show [\-x] [<keyring>]\fR
@@ -241,9 +283,9 @@ to and what keys and keyrings they contain.  If a keyring is specified then
 that keyring will be dumped instead.  If \fB\-x\fR is specified then the keyring
 IDs will be dumped in hex instead of decimal.
 .SS Add a key to a keyring
-\fBkeyctl add\fR <type> <desc> <data> <keyring>
+\fBkeyctl add\fR [\-x] <type> <desc> <data> <keyring>
 .br
-\fBkeyctl padd\fR <type> <desc> <keyring>
+\fBkeyctl padd\fR [\-x] <type> <desc> <keyring>
 
 This command creates a key of the specified type and description; instantiates
 it with the given data and attaches it to the specified keyring. It then prints
@@ -265,6 +307,10 @@ $ echo \-n stuff | keyctl padd user mykey @u
 26
 .fi
 .RE
+
+If \fB\-x\fR is given, then the data is hex-decoded with whitespace being
+discarded.
+
 .SS Request a key
 \fBkeyctl request\fR <type> <desc> [<dest_keyring>]
 .br
@@ -306,9 +352,9 @@ $ keyctl request user debug:hello
 .fi
 .RE
 .SS Update a key
-\fBkeyctl update\fR <key> <data>
+\fBkeyctl update\fR [\-x] <key> <data>
 .br
-\fBkeyctl pupdate\fR <key>
+\fBkeyctl pupdate\fR [\-x] <key>
 
 This command replaces the data attached to a key with a new set of data. If the
 type of the key doesn't support update then error "Operation not supported"
@@ -326,8 +372,13 @@ taking it from the command line:
 .RS
 .nf
 $ echo \-n zebra | keyctl pupdate 23
+$ echo 616263313233 | keyctl pupdate -x 23
 .fi
 .RE
+
+If \fB\-x\fR is given, then the data is hex-decoded with whitespace being
+discarded.
+
 .SS Create a keyring
 \fBkeyctl newring\fR <name> <keyring>
 
@@ -633,9 +684,9 @@ keyring;4043;4043;3f1f0000;fish
 .fi
 .RE
 .SS Instantiate a key
-\fBkeyctl instantiate\fR <key> <data> <keyring>
+\fBkeyctl instantiate\fR [\-x] <key> <data> <keyring>
 .br
-\fBkeyctl pinstantiate\fR <key> <keyring>
+\fBkeyctl pinstantiate\fR [\-x] <key> <keyring>
 .br
 \fBkeyctl negate\fR <key> <timeout> <keyring>
 .br
@@ -678,6 +729,16 @@ than taking it from the command line:
 $ echo \-n "Debug $3" | keyctl pinstantiate $1 $4
 .fi
 .RE
+
+If \fB\-x\fR is given, then the data is hex-decoded with whitespace being
+discarded:
+
+.RS
+.nf
+$ echo 01 02 03 04 | keyctl pinstantiate -x $1 $4
+.fi
+.RE
+
 .SS Set the expiry time on a key
 \fBkeyctl timeout\fR <key> <timeout>
 
@@ -703,10 +764,12 @@ unconfined_u:unconfined_r:unconfined_t:s0\-s0:c0.c1023
 .fi
 .RE
 .SS Give the parent process a new session keyring
-\fBkeyctl new_session\fR
+\fBkeyctl new_session [<name>]\fR
 
 This command is used to give the invoking process (typically a shell) a new
-session keyring, discarding its old session keyring.
+session keyring, discarding its old session keyring.  If a name is given, the
+keyring is given that name, otherwise it will be given a name of "_ses" and
+will not be manually joinable.
 
 .RS
 .nf
@@ -728,6 +791,7 @@ call, and so may only affect processes with matching credentials.
 Furthermore, the change does not take effect till the parent process next
 transitions from kernel space to user space - typically when the \fBwait\fP()
 system call returns.
+
 .SS Remove dead keys from the session keyring tree
 \fBkeyctl reap\fR
 
@@ -807,6 +871,9 @@ The result is printed to stdout as a hex dump.
 $ keyctl dh_compute $1 $2 $3
 8 bytes of data in result:
 00010203 04050607
+.fi
+.RE
+
 .SS Compute a Diffie-Hellman shared secret and derive key material
 \fBkeyctl\fR dh_compute_kdf <private> <prime> <base> <output_length> <hash_type>
 
@@ -822,15 +889,17 @@ The operation is compliant to the specification of SP800-56A.
 
 The result is printed to stdout as hex dump.
 .SS Compute a Diffie-Hellman shared secret and apply KDF with other input
-\fBkeyctl\fR dh_compute_kdf_oi <private> <prime> <base> <output_length> <hash_type>
+\fBkeyctl\fR dh_compute_kdf_oi [\-x] <private> <prime> <base> <output_length> <hash_type>
 
 This command is identical to the command
 .IR dh_compute_kdf
 to generate a Diffie-Hellman shared secret followed by a key derivation
 operation. This command allows the caller to provide the other input data
 (OI data) compliant to SP800-56A via stdin.
-.fi
-.RE
+
+If \fB\-x\fR is given, then the data passed to stdin is hex-decoded with
+whitespace being discarded.
+
 .SS Perform public-key operations with an asymmetric key
 \fBkeyctl\fR pkey_query <key> <pass> [k=v]*
 .br
@@ -883,6 +952,106 @@ keyctl pkey_verify $k 0 foo.hash foo.sig enc=pkcs1 hash=sha256
 .RE
 .PP
 See asymmetric-key(7) for more information.
+
+.SS Change notifications
+\fBkeyctl\fR watch [\-f<filters>] <key>
+.br
+\fBkeyctl\fR watch_session [\-f <filters>] [-n <name>] \\
+                <notifylog> <gclog> <fd> <prog> [<arg1> <arg2> ...]
+\fBkeyctl\fR watch_add <fd> <key>
+.br
+\fBkeyctl\fR watch_rm <fd> <key>
+.br
+.PP
+The
+.B watch
+command watches a single key, printing notifications to stdout until the key
+is destroyed.  Filters can be employed to cut down the events that will be
+delivered.  The
+.I filter
+string is a series of letters, each one of which enables a particular event
+subtype:
+.PP
+.RS
+.nf
+.BR i " - The key has been instantiated"
+.BR p " - The key has been updated"
+.BR l " - A link has been added to a keyring"
+.BR n " - A link has been removed from a keyring"
+.BR c " - A keyring has been cleared"
+.BR r " - A key has been revoked"
+.BR v " - A key has been invalidated"
+.BR s " - A key has had its attributes changed"
+.fi
+.RE
+.PP
+The output of the command looks like:
+.PP
+.RS
+.nf
+.RI < keyid "> <" event "> [<" aux ">]"
+.fi
+.RE
+.PP
+Where
+.I keyid
+is the primary subject of the notification,
+.I op
+is the event and
+.I aux
+is the secondary key if there is one (such as link where the primary key is
+the keyring secondary key is the key being linked in to it).  For example:
+.PP
+.RS
+.nf
+255913279 link 340681059
+255913279 clr
+.fi
+.RE
+.PP
+An additional notication is generated when a key being watched is garbage
+collected, e.g.:
+.PP
+.RS
+.nf
+255913279 gc
+.fi
+.RE
+.PP
+The
+.B watch_session
+command creates a new session keyring, with name
+.I name
+if given, watches it for notifications and runs program
+.I prog
+with it.  The program is given the specified arguments.
+.PP
+A second process is forked off to monitor the notifications.  The output from
+that is directed to the files
+.I notifylog
+for most notifications and
+.I gclog
+for key removal notifications (which are asynchronous and may be deferred).
+.PP
+The
+.BR watch_queue (7)
+device is exported to the program attached to fd number
+.IR fd .
+This can be passed by the other two commands.
+.PP
+The
+.B watch_add
+command adds a watch on
+.I key
+to the
+.B watch_queue
+attached to
+.I fd
+as exported by watch_session and the
+.B watch_rm
+caommand removes it.  A watch_queue can handle multiple keys and even non-keys
+sources as well.
+
 
 .SH ERRORS
 There are a number of common errors returned by this program:

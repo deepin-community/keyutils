@@ -16,13 +16,11 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring for CA keys
 marker "ADD CA KEYRING"
-create_keyring cakeyring @s
-expect_keyid cakeyringid
+create_keyring --new=cakeyringid cakeyring @s
 
 # create a keyring
 marker "ADD KEYRING TO RESTRICT"
-create_keyring restrict @s
-expect_keyid restrictid
+create_keyring --new=restrictid restrict @s
 
 # invalid payload
 marker "INVALID EXTRA PARAMETER 1"

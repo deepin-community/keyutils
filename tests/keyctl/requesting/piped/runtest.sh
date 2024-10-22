@@ -21,8 +21,7 @@ set_gc_delay 10
 
 # create a pair of keyrings to play in
 marker "CREATE KEYRINGS"
-create_keyring "sandbox" @s
-expect_keyid keyringid
+create_keyring --new=keyringid "sandbox" @s
 
 # check that we can't yet request a non-existent key
 marker "CHECK REQUEST FAILS"
@@ -31,13 +30,11 @@ expect_error ENOKEY
 
 # add a user key to the first keyring
 marker "ADD USER KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # request the key
 marker "REQUEST KEY"
-request_key user lizard
-expect_keyid keyid2 $keyid
+request_key --old=$keyid user lizard
 
 # remove the key from the keyring
 marker "DETACH KEY FROM KEYRING"
@@ -45,18 +42,16 @@ unlink_key $keyid $keyringid
 
 # request a key from /sbin/request-key to the session keyring
 marker "PIPED CALL OUT REQUEST KEY TO SESSION"
-prequest_key_callout gizzard user debug:lizard
-expect_keyid keyid
+prequest_key_callout --new=keyid gizzard user debug:lizard
 
 # should have appeared in the session keyring
 marker "CHECK ATTACHMENT TO SESSION KEYRING"
 list_keyring @s
 expect_keyring_rlist rlist $keyid
 
-# rerequesting should pick up that key again
+# re-requesting should pick up that key again
 marker "REDO PIPED CALL OUT REQUEST KEY TO SESSION"
-prequest_key_callout gizzard user debug:lizard
-expect_keyid keyid2 $keyid
+prequest_key_callout --old=$keyid gizzard user debug:lizard
 
 # remove the key from the session
 # - it was installed twice
@@ -70,8 +65,7 @@ expect_error ENOKEY
 
 # request a key from /sbin/request-key to the keyring we made
 marker "PIPED CALL OUT REQUEST KEY TO KEYRING"
-prequest_key_callout gizzard user debug:lizard $keyringid
-expect_keyid keyid
+prequest_key_callout --new=keyid gizzard user debug:lizard $keyringid
 
 # should have appeared once each in the sandbox and session keyrings
 marker "CHECK ATTACHMENT TO KEYRING"
@@ -82,10 +76,9 @@ marker "CHECK ATTACHMENT TO SESSION"
 list_keyring @s
 expect_keyring_rlist rlist $keyid
 
-# rerequesting should pick up that key again
+# re-requesting should pick up that key again
 marker "REDO PIPED CALL OUT REQUEST KEY TO KEYRING"
-prequest_key_callout gizzard user debug:lizard $keyringid
-expect_keyid keyid2 $keyid
+prequest_key_callout --old=$keyid gizzard user debug:lizard $keyringid
 
 # remove the key from the session
 marker "DETACH KEY"

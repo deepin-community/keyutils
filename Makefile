@@ -1,5 +1,6 @@
 CPPFLAGS	:= -I.
 CFLAGS		:= -g -Wall -Werror
+CXXFLAGS	:= -g -Wall -Werror
 INSTALL		:= install
 DESTDIR		:=
 SPECFILE	:= keyutils.spec
@@ -58,7 +59,7 @@ LIBNAME		:= libkeyutils.so.$(APIVERSION)
 #
 ###############################################################################
 ifeq ($(origin LIBDIR),undefined)
-LIBDIR		:= $(shell ldd /usr/bin/make | grep '\(/libc\)' | sed -e 's!.*\(/.*\)/libc[.].*!\1!')
+LIBDIR		:= $(shell ldd /usr/bin/make | grep '\(/libc[.]\)' | sed -e 's!.*\(/.*\)/libc[.].*!\1!')
 endif
 ifeq ($(origin USRLIBDIR),undefined)
 USRLIBDIR	:= $(patsubst /lib/%,/usr/lib/%,$(LIBDIR))
@@ -99,7 +100,7 @@ endif
 # Normal build rule
 #
 ###############################################################################
-all: keyctl request-key key.dns_resolver
+all: keyctl request-key key.dns_resolver cxx
 
 ###############################################################################
 #
@@ -149,8 +150,11 @@ endif
 %.o: %.c keyutils.h Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
-keyctl: keyctl.o $(LIB_DEPENDENCY)
-	$(CC) -L. $(CFLAGS) $(LDFLAGS) $(RPATH) -o $@ $< -lkeyutils
+keyctl: keyctl.o keyctl_testing.o keyctl_watch.o $(LIB_DEPENDENCY)
+	$(CC) -L. $(CFLAGS) $(LDFLAGS) $(RPATH) -o $@ \
+		keyctl.o keyctl_testing.o keyctl_watch.o -lkeyutils
+keyctl.o keyctl_testing.o keyctl_watch.o: keyctl.h
+keyctl_watch.o: watch_queue.h
 
 request-key: request-key.o $(LIB_DEPENDENCY)
 	$(CC) -L. $(CFLAGS) $(LDFLAGS) $(RPATH) -o $@ $< -lkeyutils
@@ -161,6 +165,18 @@ key.dns_resolver: key.dns_resolver.o dns.afsdb.o $(LIB_DEPENDENCY)
 
 key.dns_resolver.o: key.dns_resolver.c key.dns.h
 dns.afsdb.o: dns.afsdb.c key.dns.h
+
+###############################################################################
+#
+# Check that the header file has valid C++ syntax
+#
+###############################################################################
+cxx.stamp: keyutils.h Makefile
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -x c++-header -fsyntax-only $<
+	touch $@
+
+cxx: cxx.stamp
+.PHONY: cxx
 
 ###############################################################################
 #
@@ -201,6 +217,7 @@ endif
 	$(INSTALL) -D key.dns_resolver $(DESTDIR)$(SBINDIR)/key.dns_resolver
 	$(INSTALL) -D -m 0644 request-key.conf $(DESTDIR)$(ETCDIR)/request-key.conf
 	mkdir -p $(DESTDIR)$(ETCDIR)/request-key.d
+	mkdir -p $(DESTDIR)$(ETCDIR)/keyutils
 	mkdir -p $(DESTDIR)$(MAN1)
 	$(INSTALL) -m 0644 $(wildcard man/*.1) $(DESTDIR)$(MAN1)
 	mkdir -p $(DESTDIR)$(MAN3)
@@ -239,10 +256,11 @@ test:
 ###############################################################################
 clean:
 	$(MAKE) -C tests clean
-	$(RM) libkeyutils.so* libkeyutils.a
+	$(RM) libkeyutils.so* libkeyutils.a libkeyutils.pc
 	$(RM) keyctl request-key key.dns_resolver
 	$(RM) *.o *.os *~
 	$(RM) debugfiles.list debugsources.list
+	$(RM) cxx.stamp
 
 distclean: clean
 	$(RM) -r rpmbuild $(TARBALL)
@@ -267,12 +285,12 @@ SRCBALL	:= rpmbuild/SOURCES/$(TARBALL)
 ZSRCBALL := rpmbuild/SOURCES/$(ZTARBALL)
 
 BUILDID	:= .local
-dist	:= $(word 2,$(shell grep -r "^%dist" /etc/rpm /usr/lib/rpm))
-release3:= $(word 2,$(shell grep ^Release: $(SPECFILE)))
-release2:= $(subst %{?dist},$(dist),$(release3))
-release1:= $(subst %{?buildid},$(BUILDID),$(release2))
-release	:= $(subst %{?distprefix},,$(release1))
-rpmver	:= $(VERSION)-$(release)
+rpmver0	:= $(shell rpmspec -q ./keyutils.spec --define "buildid $(BUILDID)")
+rpmver1	:= $(word 1,$(rpmver0))
+rpmver2	:= $(subst ., ,$(rpmver1))
+rpmver3	:= $(lastword $(rpmver2))
+rpmver4	:= $(patsubst %.$(rpmver3),%,$(rpmver1))
+rpmver	:= $(patsubst keyutils-%,%,$(rpmver4))
 SRPM	:= rpmbuild/SRPMS/keyutils-$(rpmver).src.rpm
 
 RPMBUILDDIRS := \
@@ -286,13 +304,15 @@ RPMBUILDDIRS := \
 RPMFLAGS := \
 	--define "buildid $(BUILDID)"
 
-rpm:
+srpm:
 	mkdir -p rpmbuild
 	chmod ug-s rpmbuild
 	mkdir -p rpmbuild/{SPECS,SOURCES,BUILD,BUILDROOT,RPMS,SRPMS}
 	git archive --prefix=keyutils-$(VERSION)/ --format tar -o $(SRCBALL) HEAD
 	bzip2 -9 <$(SRCBALL) >$(ZSRCBALL)
 	rpmbuild -ts $(ZSRCBALL) --define "_srcrpmdir rpmbuild/SRPMS" $(RPMFLAGS)
+
+rpm: srpm
 	rpmbuild --rebuild $(SRPM) $(RPMBUILDDIRS) $(RPMFLAGS)
 
 rpmlint: rpm
@@ -311,3 +331,5 @@ show_vars:
 	@echo BUILDFOR=$(BUILDFOR)
 	@echo SONAME=$(SONAME)
 	@echo LIBNAME=$(LIBNAME)
+	@echo SRPM=$(SRPM)
+	@echo rpmver=$(rpmver)

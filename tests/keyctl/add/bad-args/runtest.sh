@@ -43,15 +43,15 @@ expect_error EINVAL
 if [ $PAGE_SIZE -lt $maxsquota ]
 then
     marker "CHECK MAXLEN DESC"
-    create_key user $maxdesc stuff @p
-    expect_keyid keyid
+    create_key --new=keyid user $maxdesc stuff @s
+    clear_keyring @s
 else
     marker "CHECK MAXLEN DESC FAILS WITH EDQUOT"
     create_key --fail user $maxdesc stuff @p
     expect_error EDQUOT
 fi
 
-# This doesn't work on MIPS earler than 3.19 because of a kernel bug
+# This doesn't work on MIPS earlier than 3.19 because of a kernel bug
 kver=`uname -r`
 kmch=`uname -m`
 if kernel_at_or_later_than 3.19 ||
