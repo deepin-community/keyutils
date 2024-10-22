@@ -90,7 +90,7 @@ marker "CHECK MAXLEN DESC"
 request_key --fail user $maxdesc
 expect_error ENOKEY
 
-# This doesn't work on MIPS earler than 3.19 because of a kernel bug
+# This doesn't work on MIPS earlier than 3.19 because of a kernel bug
 kver=`uname -r`
 kmch=`uname -m`
 if kernel_at_or_later_than 3.19 ||

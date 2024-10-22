@@ -1,0 +1,13 @@
+Index: keyutils-1.6.3/tests/toolbox.inc.sh
+===================================================================
+--- keyutils-1.6.3.orig/tests/toolbox.inc.sh
++++ keyutils-1.6.3/tests/toolbox.inc.sh
+@@ -45,7 +45,7 @@ fi
+ 
+ maxcall=$fullpage
+ 
+-maxsquota=`grep '^ *0': /proc/key-users | sed s@.*/@@`
++maxsquota=`grep "^ *$UID": /proc/key-users | sed s@.*/@@`
+ 
+ key_gc_delay_file="/proc/sys/kernel/keys/gc_delay"
+ if [ -f $key_gc_delay_file ]; then

@@ -21,8 +21,7 @@ expect_error EINVAL
 
 # add a user key to the session keyring for us to play with
 marker "ADD USER KEY"
-create_key user wibble stuff @s
-expect_keyid keyid
+create_key --new=keyid user wibble stuff @s
 
 # remove the key we just added
 marker "UNLINK KEY"

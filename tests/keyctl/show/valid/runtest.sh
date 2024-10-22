@@ -16,8 +16,7 @@ parent=@s
 for ((i=1; i<=$nr_keyrings; i++))
 do
     marker "ADD KEYRING $i"
-    create_keyring wibble$i $parent
-    expect_keyid keyringid
+    create_keyring --new=keyringid wibble$i $parent
     parent=$keyringid
     keyrings="$keyrings $keyringid"
 done

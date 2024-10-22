@@ -14,13 +14,11 @@ then
 
     # create a keyring and attach it to the session keyring
     marker "ADD KEYRING"
-    create_keyring wibble @s
-    expect_keyid keyringid
+    create_keyring --new=keyringid wibble @s
 
     # stick a key in the keyring
     marker "ADD KEY"
-    create_key user lizard gizzard $keyringid
-    expect_keyid keyid
+    create_key --new=keyid user lizard gizzard $keyringid
 
     # check that we can list it
     marker "LIST KEYRING WITH ONE"
@@ -36,23 +34,21 @@ then
     unlink_key $keyid
     expect_unlink_count n_unlinked 0
 
-    # check that the keyring is now empty 
+    # check that the keyring is now empty
     marker "LIST KEYRING"
     list_keyring $keyringid
     expect_keyring_rlist rlist empty
 
     # create a key to be massively linked
     marker "ADD MULTI KEY"
-    create_key user lizard gizzard $keyringid
-    expect_keyid keyid
+    create_key --new=keyid user lizard gizzard $keyringid
 
     # stick twenty keyrings in the keyring with twenty links
     marker "ADD TWENTY KEYRINGS WITH LINKS"
     subrings=
     for ((i=0; i<20; i++))
     do
-	create_keyring ring$i $keyringid
-	expect_keyid x
+	create_keyring --new=x ring$i $keyringid
 	keys="$keys $x"
 	subrings="$subrings $x"
 	list_keyring $keyringid

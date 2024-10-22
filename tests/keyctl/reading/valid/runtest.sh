@@ -11,13 +11,11 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # stick a key in the keyring
 marker "ADD KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # check that the key is in the keyring
 marker "LIST KEYRING"
@@ -59,7 +57,7 @@ print_key $keyid
 expect_payload payload "gizzard"
 
 # remove search permission from the key as well
-# - we should still have read permission because it's searchable in our
+# - we do not have read permission because it's no longer searchable in our
 #   keyrings
 marker "REMOVE SEARCH PERM"
 set_key_perm $keyid 0x350000

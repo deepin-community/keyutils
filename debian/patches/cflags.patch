@@ -10,10 +10,10 @@ Last-Update: 2014-05-18
  1 file changed, 2 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 5f8b163..7155363 100644
+index 599b145..331a81d 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -67,12 +67,10 @@ BUILDFOR	:= $(shell file /usr/bin/make | sed -e 's!.*ELF \(32\|64\)-bit.*!\1!')-
+@@ -68,12 +68,10 @@ BUILDFOR	:= $(shell file /usr/bin/make | sed -e 's!.*ELF \(32\|64\)-bit.*!\1!')-
  
  ifeq ($(origin CFLAGS),undefined)
  ifeq ($(BUILDFOR),32-bit)

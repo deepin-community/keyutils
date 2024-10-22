@@ -15,6 +15,10 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const char keyutils_version_string[];
 extern const char keyutils_build_string[];
 
@@ -108,6 +112,7 @@ typedef uint32_t key_perm_t;
 #define KEYCTL_RESTRICT_KEYRING		29	/* Restrict keys allowed to link to a keyring */
 #define KEYCTL_MOVE			30	/* Move keys between keyrings */
 #define KEYCTL_CAPABILITIES		31	/* Find capabilities of keyrings subsystem */
+#define KEYCTL_WATCH_KEY		32	/* Watch a key or ring of keys for changes */
 
 /* keyctl structures */
 struct keyctl_dh_params {
@@ -162,6 +167,9 @@ struct keyctl_pkey_params {
 #define KEYCTL_CAPS0_INVALIDATE		0x20 /* KEYCTL_INVALIDATE supported */
 #define KEYCTL_CAPS0_RESTRICT_KEYRING	0x40 /* KEYCTL_RESTRICT_KEYRING supported */
 #define KEYCTL_CAPS0_MOVE		0x80 /* KEYCTL_MOVE supported */
+#define KEYCTL_CAPS1_NS_KEYRING_NAME	0x01 /* Keyring names are per-user_namespace */
+#define KEYCTL_CAPS1_NS_KEY_TAG		0x02 /* Key indexing can include a namespace tag */
+#define KEYCTL_CAPS1_NOTIFICATIONS	0x04 /* Keys generate watchable notifications */
 
 /*
  * syscall wrappers
@@ -218,7 +226,7 @@ extern long keyctl_invalidate(key_serial_t id);
 extern long keyctl_get_persistent(uid_t uid, key_serial_t id);
 extern long keyctl_dh_compute(key_serial_t priv, key_serial_t prime,
 			      key_serial_t base, char *buffer, size_t buflen);
-extern long keyctl_dh_compute_kdf(key_serial_t private, key_serial_t prime,
+extern long keyctl_dh_compute_kdf(key_serial_t priv, key_serial_t prime,
 				  key_serial_t base, char *hashname,
 				  char *otherinfo, size_t otherinfolen,
 				  char *buffer, size_t buflen);
@@ -249,6 +257,7 @@ extern long keyctl_move(key_serial_t id,
 			key_serial_t to_ringid,
 			unsigned int flags);
 extern long keyctl_capabilities(unsigned char *buffer, size_t buflen);
+extern long keyctl_watch_key(key_serial_t id, int watch_queue_fd, int watch_id);
 
 /*
  * utilities
@@ -265,5 +274,9 @@ extern int recursive_key_scan(key_serial_t key, recursive_key_scanner_t func, vo
 extern int recursive_session_key_scan(recursive_key_scanner_t func, void *data);
 extern key_serial_t find_key_by_type_and_desc(const char *type, const char *desc,
 					      key_serial_t destringid);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* KEYUTILS_H */

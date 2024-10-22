@@ -10,6 +10,7 @@
  */
 
 #define _GNU_SOURCE
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -23,16 +24,19 @@
 #include <asm/unistd.h>
 #include "keyutils.h"
 #include <limits.h>
+#include "keyctl.h"
 
-struct command {
-	void (*action)(int argc, char *argv[]) __attribute__((noreturn));
-	const char	*name;
-	const char	*format;
-};
-
-#define nr __attribute__((noreturn))
+static void try_wipe_memory(void *s, size_t n)
+{
+#if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#if __GLIBC_PREREQ(2,25)
+	explicit_bzero(s, n);
+#endif
+#endif
+}
 
 static nr void act_keyctl___version(int argc, char *argv[]);
+static nr void act_keyctl_id(int argc, char *argv[]);
 static nr void act_keyctl_show(int argc, char *argv[]);
 static nr void act_keyctl_add(int argc, char *argv[]);
 static nr void act_keyctl_padd(int argc, char *argv[]);
@@ -81,27 +85,28 @@ static nr void act_keyctl_pkey_verify(int argc, char *argv[]);
 static nr void act_keyctl_move(int argc, char *argv[]);
 static nr void act_keyctl_supports(int argc, char *argv[]);
 
-const struct command commands[] = {
+static const struct command commands[] = {
 	{ act_keyctl___version,	"--version",	"" },
-	{ act_keyctl_add,	"add",		"<type> <desc> <data> <keyring>" },
+	{ act_keyctl_add,	"add",		"[-x] <type> <desc> <data> <keyring>" },
 	{ act_keyctl_chgrp,	"chgrp",	"<key> <gid>" },
 	{ act_keyctl_chown,	"chown",	"<key> <uid>" },
 	{ act_keyctl_clear,	"clear",	"<keyring>" },
 	{ act_keyctl_describe,	"describe",	"<keyring>" },
 	{ act_keyctl_dh_compute, "dh_compute",	"<private> <prime> <base>" },
 	{ act_keyctl_dh_compute_kdf, "dh_compute_kdf", "<private> <prime> <base> <len> <hash_name>" },
-	{ act_keyctl_dh_compute_kdf_oi, "dh_compute_kdf_oi", "<private> <prime> <base> <len> <hash_name>" },
-	{ act_keyctl_instantiate, "instantiate","<key> <data> <keyring>" },
-	{ act_keyctl_invalidate,"invalidate",	"<key>" },
+	{ act_keyctl_dh_compute_kdf_oi, "dh_compute_kdf_oi", "[-x] <private> <prime> <base> <len> <hash_name>" },
 	{ act_keyctl_get_persistent, "get_persistent", "<keyring> [<uid>]" },
+	{ act_keyctl_id,	"id",		"<key>" },
+	{ act_keyctl_instantiate, "instantiate","[-x] <key> <data> <keyring>" },
+	{ act_keyctl_invalidate,"invalidate",	"<key>" },
 	{ act_keyctl_link,	"link",		"<key> <keyring>" },
 	{ act_keyctl_list,	"list",		"<keyring>" },
 	{ act_keyctl_move,	"move",		"[-f] <key> <from_keyring> <to_keyring>" },
 	{ act_keyctl_negate,	"negate",	"<key> <timeout> <keyring>" },
-	{ act_keyctl_new_session, "new_session",	"" },
+	{ act_keyctl_new_session, "new_session",	"[<name>]" },
 	{ act_keyctl_newring,	"newring",	"<name> <keyring>" },
-	{ act_keyctl_padd,	"padd",		"<type> <desc> <keyring>" },
-	{ act_keyctl_pinstantiate, "pinstantiate","<key> <keyring>" },
+	{ act_keyctl_padd,	"padd",		"[-x] <type> <desc> <keyring>" },
+	{ act_keyctl_pinstantiate, "pinstantiate","[-x] <key> <keyring>" },
 	{ act_keyctl_pipe,	"pipe",		"<key>" },
 	{ act_keyctl_pkey_query, "pkey_query",	"<key> <pass> [k=v]*" },
 	{ act_keyctl_pkey_encrypt, "pkey_encrypt", "<key> <pass> <datafile> [k=v]*" },
@@ -110,7 +115,7 @@ const struct command commands[] = {
 	{ act_keyctl_pkey_verify, "pkey_verify", "<key> <pass> <datafile> <sigfile> [k=v]*" },
 	{ act_keyctl_prequest2,	"prequest2",	"<type> <desc> [<dest_keyring>]" },
 	{ act_keyctl_print,	"print",	"<key>" },
-	{ act_keyctl_pupdate,	"pupdate",	"<key>" },
+	{ act_keyctl_pupdate,	"pupdate",	"[-x] <key>" },
 	{ act_keyctl_purge,	"purge",	"<type>" },
 	{ NULL,			"purge",	"[-p] [-i] <type> <desc>" },
 	{ NULL,			"purge",	"-s <type> <desc>" },
@@ -130,17 +135,20 @@ const struct command commands[] = {
 	{ NULL,			"session",	"<name> [<prog> <arg1> <arg2> ...]" },
 	{ act_keyctl_setperm,	"setperm",	"<key> <mask>" },
 	{ act_keyctl_show,	"show",		"[-x] [<keyring>]" },
-	{ act_keyctl_supports,	"supports",	"[<cap>]" },
+	{ act_keyctl_supports,	"supports",	"[<cap> | --raw]" },
 	{ act_keyctl_timeout,	"timeout",	"<key> <timeout>" },
 	{ act_keyctl_unlink,	"unlink",	"<key> [<keyring>]" },
-	{ act_keyctl_update,	"update",	"<key> <data>" },
+	{ act_keyctl_update,	"update",	"[-x] <key> <data>" },
+	{ act_keyctl_watch,	"watch",	"[-f<filters>] <key>" },
+	{ act_keyctl_watch_add,	"watch_add",	"<fd> <key>" },
+	{ act_keyctl_watch_rm,	"watch_rm",	"<fd> <key>" },
+	{ act_keyctl_watch_session, "watch_session", "[-f<filters>] [-n <name>] <notifylog> <gclog> <fd> <prog> [<arg1> <arg2> ...]" },
+	{ act_keyctl_watch_sync, "watch_sync",	"<fd>" },
+	{ act_keyctl_test,	"--test",	"..." },
 	{ NULL,			NULL,		NULL }
 };
 
 static int dump_key_tree(key_serial_t keyring, const char *name, int hex_key_IDs);
-static void format(void) __attribute__((noreturn));
-static void error(const char *msg) __attribute__((noreturn));
-static key_serial_t get_key_id(char *arg);
 static void *read_file(const char *name, size_t *_size);
 
 static uid_t myuid;
@@ -152,18 +160,26 @@ static int verbose;
 /*
  * handle an error
  */
-static inline void error(const char *msg)
+void error(const char *msg)
 {
 	perror(msg);
 	exit(1);
-
-} /* end error() */
+}
 
 /*****************************************************************************/
 /*
- * execute the appropriate subcommand
+ * 
  */
 int main(int argc, char *argv[])
+{
+	do_command(argc, argv, commands, "");
+}
+
+/*
+ * Execute the appropriate subcommand.
+ */
+void do_command(int argc, char **argv,
+		const struct command *commands, const char *group)
 {
 	const struct command *cmd, *best;
 	int n;
@@ -194,7 +210,7 @@ int main(int argc, char *argv[])
 
 		/* partial match */
 		if (best) {
-			fprintf(stderr, "Ambiguous command\n");
+			fprintf(stderr, "Ambiguous %scommand\n", group);
 			exit(2);
 		}
 
@@ -202,19 +218,18 @@ int main(int argc, char *argv[])
 	}
 
 	if (!best) {
-		fprintf(stderr, "Unknown command\n");
+		fprintf(stderr, "Unknown %scommand\n", group);
 		exit(2);
 	}
 
 	best->action(argc, argv);
-
-} /* end main() */
+}
 
 /*****************************************************************************/
 /*
  * display command format information
  */
-static void format(void)
+void format(void)
 {
 	const struct command *cmd;
 
@@ -285,6 +300,59 @@ static char *grab_stdin(size_t *_size)
 	return input;
 
 } /* end grab_stdin() */
+
+/*
+ * Convert hex to binary if need be.
+ */
+void hex2bin(void **_data, size_t *_datalen, bool as_hex)
+{
+	unsigned char *buf, *q, h, l;
+	char *p, *end;
+	
+	if (!as_hex || *_datalen == 0)
+		return;
+
+	q = buf = malloc(*_datalen / 2 + 2);
+	if (!buf) {
+		try_wipe_memory(*_data, *_datalen);
+		error("malloc");
+	}
+
+	p = *_data;
+	end = p + *_datalen;
+
+	while (p < end) {
+		if (isspace(*p)) {
+			p++;
+			continue;
+		}
+		if (end - p < 2) {
+			fprintf(stderr, "Short hex doublet\n");
+			goto ret_exit;
+		}
+		if (!isxdigit(p[0]) || !isxdigit(p[1])) {
+			fprintf(stderr, "Bad hex doublet\n");
+			goto ret_exit;
+		}
+
+		h = isdigit(p[0]) ? p[0] - '0' : tolower(p[0]) - 'a' + 0xa;
+		l = isdigit(p[1]) ? p[1] - '0' : tolower(p[1]) - 'a' + 0xa;
+		p += 2;
+		*q++ = (h << 4) | l;
+	}
+
+	try_wipe_memory(*_data, *_datalen);
+
+	*q = 0;
+	*_data = buf;
+	*_datalen = q - buf;
+	return;
+
+ret_exit:
+	try_wipe_memory(*_data, *_datalen);
+	try_wipe_memory(buf, q - buf);
+	exit(1);
+}
 
 /*
  * Load the groups list and grab the process's UID and GID.
@@ -364,6 +432,27 @@ write_mask:
 
 /*****************************************************************************/
 /*
+ * Get a key or keyring ID.
+ */
+static void act_keyctl_id(int argc, char *argv[])
+{
+	key_serial_t key;
+
+	if (argc != 2)
+		format();
+
+	key = get_key_id(argv[1]);
+
+	key = keyctl_get_keyring_ID(key, 0);
+	if (key < 0)
+		error("keyctl_get_keyring_ID");
+
+	printf("%d\n", key);
+	exit(0);
+}
+
+/*****************************************************************************/
+/*
  * show the parent process's session keyring
  */
 static void act_keyctl_show(int argc, char *argv[])
@@ -395,14 +484,28 @@ static void act_keyctl_show(int argc, char *argv[])
 static void act_keyctl_add(int argc, char *argv[])
 {
 	key_serial_t dest;
+	size_t datalen;
+	void *data;
+	bool as_hex = false;
 	int ret;
+
+	if (argc > 1 && strcmp(argv[1], "-x") == 0) {
+		as_hex = true;
+		argc--;
+		argv++;
+	}
 
 	if (argc != 5)
 		format();
 
+	data = argv[3];
+	datalen = strlen(argv[3]);
+	hex2bin(&data, &datalen, as_hex);
+
 	dest = get_key_id(argv[4]);
 
-	ret = add_key(argv[1], argv[2], argv[3], strlen(argv[3]), dest);
+	ret = add_key(argv[1], argv[2], data, datalen, dest);
+	try_wipe_memory(data, datalen);
 	if (ret < 0)
 		error("add_key");
 
@@ -421,17 +524,25 @@ static void act_keyctl_padd(int argc, char *argv[])
 	key_serial_t dest;
 	size_t datalen;
 	void *data;
+	bool as_hex = false;
 	int ret;
 
+	if (argc > 1 && strcmp(argv[1], "-x") == 0) {
+		as_hex = true;
+		argc--;
+		argv++;
+	}
 
 	if (argc != 4)
 		format();
 
+	data = grab_stdin(&datalen);
+	hex2bin(&data, &datalen, as_hex);
+
 	dest = get_key_id(argv[3]);
 
-	data = grab_stdin(&datalen);
-
 	ret = add_key(argv[1], argv[2], data, datalen, dest);
+	try_wipe_memory(data, datalen);
 	if (ret < 0)
 		error("add_key");
 
@@ -524,13 +635,29 @@ static void act_keyctl_prequest2(int argc, char *argv[])
 static void act_keyctl_update(int argc, char *argv[])
 {
 	key_serial_t key;
+	size_t datalen;
+	void *data;
+	bool as_hex = false;
+	int ret;
+
+	if (argc > 1 && strcmp(argv[1], "-x") == 0) {
+		as_hex = true;
+		argc--;
+		argv++;
+	}
 
 	if (argc != 3)
 		format();
 
+	data = argv[2];
+	datalen = strlen(argv[2]);
+	hex2bin(&data, &datalen, as_hex);
+
 	key = get_key_id(argv[1]);
 
-	if (keyctl_update(key, argv[2], strlen(argv[2])) < 0)
+	ret = keyctl_update(key, data, datalen);
+	try_wipe_memory(data, datalen);
+	if (ret < 0)
 		error("keyctl_update");
 
 	exit(0);
@@ -546,14 +673,25 @@ static void act_keyctl_pupdate(int argc, char *argv[])
 	key_serial_t key;
 	size_t datalen;
 	void *data;
+	bool as_hex = false;
+	int ret;
+
+	if (argc > 1 && strcmp(argv[1], "-x") == 0) {
+		as_hex = true;
+		argc--;
+		argv++;
+	}
 
 	if (argc != 2)
 		format();
 
 	key = get_key_id(argv[1]);
 	data = grab_stdin(&datalen);
+	hex2bin(&data, &datalen, as_hex);
 
-	if (keyctl_update(key, data, datalen) < 0)
+	ret = keyctl_update(key, data, datalen);
+	try_wipe_memory(data, datalen);
+	if (ret < 0)
 		error("keyctl_update");
 
 	exit(0);
@@ -890,7 +1028,7 @@ static void act_keyctl_list(int argc, char *argv[])
 		n = sscanf((char *) buffer, "%*[^;]%n;%d;%d;%x;%n",
 			   &tlen, &uid, &gid, &perm, &dpos);
 		if (n != 3) {
-			fprintf(stderr, "Unparseable description obtained for key %d\n", key);
+			fprintf(stderr, "Unparsable description obtained for key %d\n", key);
 			exit(3);
 		}
 
@@ -983,7 +1121,7 @@ static void act_keyctl_describe(int argc, char *argv[])
 	n = sscanf(buffer, "%*[^;]%n;%d;%d;%x;%n",
 		   &tlen, &uid, &gid, &perm, &dpos);
 	if (n != 3) {
-		fprintf(stderr, "Unparseable description obtained for key %d\n", key);
+		fprintf(stderr, "Unparsable description obtained for key %d\n", key);
 		exit(3);
 	}
 
@@ -1199,14 +1337,29 @@ static void act_keyctl_session(int argc, char *argv[])
 static void act_keyctl_instantiate(int argc, char *argv[])
 {
 	key_serial_t key, dest;
+	size_t datalen;
+	void *data;
+	bool as_hex = false;
+	int ret;
+
+	if (argc > 1 && strcmp(argv[1], "-x") == 0) {
+		as_hex = true;
+		argc--;
+		argv++;
+	}
 
 	if (argc != 4)
 		format();
 
 	key = get_key_id(argv[1]);
 	dest = get_key_id(argv[3]);
+	data = argv[2];
+	datalen = strlen(argv[2]);
+	hex2bin(&data, &datalen, as_hex);
 
-	if (keyctl_instantiate(key, argv[2], strlen(argv[2]), dest) < 0)
+	ret = keyctl_instantiate(key, data, datalen, dest);
+	try_wipe_memory(data, datalen);
+	if (ret < 0)
 		error("keyctl_instantiate");
 
 	exit(0);
@@ -1222,6 +1375,14 @@ static void act_keyctl_pinstantiate(int argc, char *argv[])
 	key_serial_t key, dest;
 	size_t datalen;
 	void *data;
+	bool as_hex = false;
+	int ret;
+
+	if (argc > 1 && strcmp(argv[1], "-x") == 0) {
+		as_hex = true;
+		argc--;
+		argv++;
+	}
 
 	if (argc != 3)
 		format();
@@ -1229,8 +1390,11 @@ static void act_keyctl_pinstantiate(int argc, char *argv[])
 	key = get_key_id(argv[1]);
 	dest = get_key_id(argv[2]);
 	data = grab_stdin(&datalen);
+	hex2bin(&data, &datalen, as_hex);
 
-	if (keyctl_instantiate(key, data, datalen, dest) < 0)
+	ret = keyctl_instantiate(key, data, datalen, dest);
+	try_wipe_memory(data, datalen);
+	if (ret < 0)
 		error("keyctl_instantiate");
 
 	exit(0);
@@ -1327,10 +1491,10 @@ static void act_keyctl_new_session(int argc, char *argv[])
 {
 	key_serial_t keyring;
 
-	if (argc != 1)
+	if (argc != 1 && argc != 2)
 		format();
 
-	if (keyctl_join_session_keyring(NULL) < 0)
+	if (keyctl_join_session_keyring(argv[1]) < 0)
 		error("keyctl_join_session_keyring");
 
 	if (keyctl_session_to_parent() < 0)
@@ -1774,6 +1938,13 @@ static void act_keyctl_dh_compute_kdf_oi(int argc, char *argv[])
 	unsigned long buflen = 0;
 	size_t oilen;
 	void *oi;
+	bool as_hex = false;
+
+	if (argc > 1 && strcmp(argv[1], "-x") == 0) {
+		as_hex = true;
+		argc--;
+		argv++;
+	}
 
 	if (argc != 6)
 		format();
@@ -1791,9 +1962,11 @@ static void act_keyctl_dh_compute_kdf_oi(int argc, char *argv[])
 		error("dh_compute: cannot allocate memory");
 
 	oi = grab_stdin(&oilen);
+	hex2bin(&oi, &oilen, as_hex);
 
 	ret = keyctl_dh_compute_kdf(private, prime, base, argv[5], oi,  oilen,
 				    buffer, buflen);
+	try_wipe_memory(oi, oilen);
 	if (ret < 0)
 		error("keyctl_dh_compute_kdf");
 
@@ -2115,6 +2288,9 @@ static const struct capability_def capabilities[] = {
 	{ "key_invalidate",		0,	KEYCTL_CAPS0_INVALIDATE },
 	{ "restrict_keyring",		0,	KEYCTL_CAPS0_RESTRICT_KEYRING },
 	{ "move_key",			0,	KEYCTL_CAPS0_MOVE },
+	{ "ns_keyring_name",		1,	KEYCTL_CAPS1_NS_KEYRING_NAME },
+	{ "ns_key_tag",			1,	KEYCTL_CAPS1_NS_KEY_TAG },
+	{ "notify",			1,	KEYCTL_CAPS1_NOTIFICATIONS },
 	{}
 };
 
@@ -2125,11 +2301,14 @@ static void act_keyctl_supports(int argc, char *argv[])
 {
 	const struct capability_def *p;
 	unsigned char caps[256];
+	size_t len;
+	int i;
 
 	if (argc < 1 || argc > 2)
 		format();
 
-	if (keyctl_capabilities(caps, sizeof(caps)) < 0)
+	len = keyctl_capabilities(caps, sizeof(caps));
+	if (len < 0)
 		error("keyctl_capabilities");
 
 	if (argc == 1) {
@@ -2139,6 +2318,12 @@ static void act_keyctl_supports(int argc, char *argv[])
 			       (caps[p->index] & p->mask) ? '1' : '0');
 		exit(0);
 	} else {
+		if (strcmp(argv[1], "--raw") == 0) {
+			for (i = 0; i < len; i++)
+				printf("%02x", caps[i]);
+			printf("\n");
+		}
+
 		for (p = capabilities; p->name; p++)
 			if (strcmp(argv[1], p->name) == 0)
 				exit((caps[p->index] & p->mask) ? 0 : 1);
@@ -2150,7 +2335,7 @@ static void act_keyctl_supports(int argc, char *argv[])
 /*
  * parse a key identifier
  */
-static key_serial_t get_key_id(char *arg)
+key_serial_t get_key_id(char *arg)
 {
 	key_serial_t id;
 	char *end;
@@ -2281,7 +2466,7 @@ static int dump_key_tree_aux(key_serial_t key, int depth, int more, int hex_key_
 		   type, &uid, &gid, &perm, &dpos);
 
 	if (n != 4) {
-		fprintf(stderr, "Unparseable description obtained for key %d\n", key);
+		fprintf(stderr, "Unparsable description obtained for key %d\n", key);
 		exit(3);
 	}
 

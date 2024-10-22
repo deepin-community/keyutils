@@ -10,26 +10,25 @@ result=PASS
 echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # check that we can add a user key to the session keyring
-marker "ADD USER KEY" 
-create_key user wibble stuff @s
-expect_keyid keyid
+marker "ADD USER KEY"
+create_key --new=keyid user wibble stuff @s
 
 # read back what we put in it
-marker "PRINT PAYLOAD" 
+marker "PRINT PAYLOAD"
 print_key $keyid
 expect_payload payload "stuff"
 
 # check that we can update a user key
-marker "PUPDATE USER KEY" 
-pupdate_key $keyid "lizard"
+marker "PUPDATE USER KEY"
+echo -n "lizard" | pupdate_key $keyid
 
 # read back what we changed it to
-marker "PRINT UPDATED PAYLOAD" 
+marker "PRINT UPDATED PAYLOAD"
 print_key $keyid
 expect_payload payload "lizard"
 
 # remove the key we added
-marker "UNLINK KEY" 
+marker "UNLINK KEY"
 unlink_key $keyid @s
 
 echo "++++ FINISHED TEST: $result" >>$OUTPUTFILE

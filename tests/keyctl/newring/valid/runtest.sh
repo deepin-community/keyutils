@@ -11,8 +11,7 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # check that we now have an empty keyring
 marker "LIST KEYRING"
@@ -21,8 +20,7 @@ expect_keyring_rlist rlist empty
 
 # check that creating a second keyring of the same name displaces the first
 marker "ADD KEYRING AGAIN"
-create_keyring wibble @s
-expect_keyid keyringid2
+create_keyring --new=keyringid2 wibble @s
 
 # should be different keyrings
 if [ "x$keyringid" == "x$keyringid2" ]

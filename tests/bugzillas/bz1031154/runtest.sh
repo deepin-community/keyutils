@@ -54,8 +54,7 @@ fi
 
 # create a big key to probe
 marker "CREATE BIG KEY"
-pcreate_key_by_size 8192 big_key test-key @s
-expect_keyid id
+pcreate_key_by_size --new=id 8192 big_key test-key @s
 
 # check the big key is file backed and the right size
 marker "CHECK BIG KEY"

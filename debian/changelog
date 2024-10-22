@@ -1,14 +1,49 @@
-keyutils (1.6.1-3) UNRELEASED; urgency=medium
+keyutils (1.6.3-3.1) unstable; urgency=medium
 
-  * update
+  * Non-maintainer upload.
+  * Apply patch from Aurelien Jarno to fix build in
+    unshare (Closes: #1070012)
 
- -- Christian Kastner <ckk@debian.org>  Fri, 29 Jul 2022 15:46:34 +0800
+ -- Chris Hofstaedtler <zeha@debian.org>  Sun, 20 Oct 2024 19:10:45 +0200
+
+keyutils (1.6.3-3) unstable; urgency=medium
+
+  [ Helmut Grohne ]
+  * Move files to /usr for DEP17. (Closes: #1059816)
+
+  [ Christian Kastner ]
+  * d/control: Mention the keyctl utility by name (Closes: #1063144)
+
+ -- Christian Kastner <ckk@debian.org>  Tue, 06 Feb 2024 09:09:45 +0100
+
+keyutils (1.6.3-2) unstable; urgency=medium
+
+  * Bump Standards-Version to 4.6.2 (no changes needed)
+  * d/control: Change Homepage to kernel.org page
+  * Add missing symbols to *.symbols file
+  * Bump copyright
+
+ -- Christian Kastner <ckk@debian.org>  Sun, 18 Dec 2022 22:15:58 +0100
+
+keyutils (1.6.3-1) unstable; urgency=medium
+
+  * New upstream release. (Closes: #1012606)
+    - Add Mark-test-requiring-root-as-such.patch
+    - Drop endianness-and-PIE.patch
+    - Refresh patches
+  * Update d/watch (switch URL)
+  * Bump Standards-Version to 4.6.1 (no changes needed)
+  * Update autopkgtest
+
+ -- Christian Kastner <ckk@debian.org>  Sun, 19 Jun 2022 13:18:10 +0200
 
 keyutils (1.6.1-3) unstable; urgency=medium
 
-  * arm test failed, skip test.
+  * Bump Standards-Version to 4.6.0 (no changes needed)
+  * Bump debhelper compatibility to 13
+  * Drop cifs.patch (obsolete)
 
- -- wangxiangyu <wangxiangyu@uniontech.com>  Fri, 29 Jul 2022 15:45:36 +0100
+ -- Christian Kastner <ckk@debian.org>  Fri, 04 Mar 2022 11:13:34 +0100
 
 keyutils (1.6.1-2) unstable; urgency=medium
 

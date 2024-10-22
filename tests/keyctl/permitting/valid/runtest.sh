@@ -11,13 +11,11 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # stick a key in the keyring
 marker "ADD KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # changing the key's ownership is not supported before 2.6.18-rc1
 if kernel_older_than 2.6.18

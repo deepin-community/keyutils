@@ -23,7 +23,7 @@ Last-Update: 2019-02-20
  4 files changed, 6 insertions(+), 30 deletions(-)
 
 diff --git a/tests/keyctl/padd/useradd/runtest.sh b/tests/keyctl/padd/useradd/runtest.sh
-index 206a163..22e3fda 100644
+index aea21d9..135e491 100644
 --- a/tests/keyctl/padd/useradd/runtest.sh
 +++ b/tests/keyctl/padd/useradd/runtest.sh
 @@ -40,10 +40,7 @@ expect_payload payload "lizard"
@@ -65,10 +65,10 @@ index 4c83131..5258b17 100644
  marker "NAMED SESSION"
  new_session qwerty keyctl rdescribe @s "@"
 diff --git a/tests/keyctl/show/valid/runtest.sh b/tests/keyctl/show/valid/runtest.sh
-index cbdd85f..f7e7c9d 100644
+index b4d5b2c..308dd64 100644
 --- a/tests/keyctl/show/valid/runtest.sh
 +++ b/tests/keyctl/show/valid/runtest.sh
-@@ -30,8 +30,7 @@ then
+@@ -29,8 +29,7 @@ then
      failed
  fi
  
@@ -79,10 +79,10 @@ index cbdd85f..f7e7c9d 100644
      # should be eight lines in the output (banner + session + 6 keyrings)
      marker "COUNT LINES"
 diff --git a/tests/prepare.inc.sh b/tests/prepare.inc.sh
-index 448e42b..83556c8 100644
+index 0b66237..5ca629d 100644
 --- a/tests/prepare.inc.sh
 +++ b/tests/prepare.inc.sh
-@@ -90,14 +90,8 @@ else
+@@ -113,14 +113,8 @@ else
      #
      # Work out whether the big_key type is supported by the kernel.
      #
@@ -99,7 +99,7 @@ index 448e42b..83556c8 100644
  
      #
      # Work out whether Diffie-Hellman is supported by the kernel
-@@ -105,7 +99,8 @@ else
+@@ -128,7 +122,8 @@ else
      if [ $OSDIST = RHEL ]
      then
  	:

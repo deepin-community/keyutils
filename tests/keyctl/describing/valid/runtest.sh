@@ -11,8 +11,7 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # create a keyring and attach it to the session keyring
 marker "ADD KEYRING"
-create_keyring wibble @s
-expect_keyid keyringid
+create_keyring --new=keyringid wibble @s
 
 # validate the new keyring's name and type
 marker "VALIDATE KEYRING"
@@ -31,8 +30,7 @@ expect_keyring_rlist rlist empty
 
 # stick a key in the keyring
 marker "ADD KEY"
-create_key user lizard gizzard $keyringid
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard $keyringid
 
 # validate the new key's name and type
 marker "VALIDATE KEY"

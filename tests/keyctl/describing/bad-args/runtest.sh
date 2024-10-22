@@ -18,8 +18,7 @@ expect_error EINVAL
 
 # create a key
 marker "CREATE KEY"
-create_key user lizard gizzard @s
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard @s
 
 # dispose of the key
 marker "UNLINK KEY"

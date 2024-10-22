@@ -18,8 +18,7 @@ expect_error ENOKEY
 
 # create a non-keyring
 marker "CREATE KEY"
-create_key user lizard gizzard @s
-expect_keyid keyid
+create_key --new=keyid user lizard gizzard @s
 
 # dispose of the key we were using
 marker "UNLINK KEY"

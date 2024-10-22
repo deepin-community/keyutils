@@ -11,8 +11,16 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # check that we can add a user key to the session keyring
 marker "ADD USER KEY"
-create_key user wibble stuff @s
-expect_keyid keyid
+create_key --new=keyid user wibble stuff @s
+
+# read back what we put in it
+marker "PRINT PAYLOAD"
+print_key $keyid
+expect_payload payload "stuff"
+
+# check that we can add a hex-encoded user key to the session keyring
+marker "ADD HEX USER KEY"
+create_key --update=$keyid -x user wibble "73  7475 66  66  " @s
 
 # read back what we put in it
 marker "PRINT PAYLOAD"
@@ -21,15 +29,7 @@ expect_payload payload "stuff"
 
 # check that we can update a user key
 marker "UPDATE USER KEY"
-create_key user wibble lizard @s
-
-# check we get the same key ID back
-expect_keyid keyid2
-
-if [ "x$keyid" != "x$keyid2" ]
-then
-    failed
-fi
+create_key --update=$keyid user wibble lizard @s
 
 # read back what we changed it to
 marker "PRINT UPDATED PAYLOAD"

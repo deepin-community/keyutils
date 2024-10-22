@@ -45,7 +45,7 @@ expect_error ENOKEY
 search_for_key --fail @s user $maxdesc @p
 expect_error ENOKEY
 
-# This doesn't work on MIPS earler than 3.19 because of a kernel bug
+# This doesn't work on MIPS earlier than 3.19 because of a kernel bug
 kver=`uname -r`
 kmch=`uname -m`
 if kernel_at_or_later_than 3.19 ||
@@ -67,8 +67,7 @@ expect_error EINVAL
 
 # create a non-keyring key
 marker "CREATE KEY"
-create_key user a a @s
-expect_keyid keyid
+create_key --new=keyid user a a @s
 
 # search the non-keyring key
 marker "SEARCH KEY"

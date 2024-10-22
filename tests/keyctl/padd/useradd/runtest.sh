@@ -11,8 +11,16 @@ echo "++++ BEGINNING TEST" >$OUTPUTFILE
 
 # check that we can add a user key to the session keyring
 marker "ADD USER KEY"
-pcreate_key stuff user wibble @s
-expect_keyid keyid
+pcreate_key --new=keyid stuff user wibble @s
+
+# read back what we put in it
+marker "PRINT PAYLOAD"
+print_key $keyid
+expect_payload payload "stuff"
+
+# check that we can add a hex-encoded user key to the session keyring
+marker "ADD HEX USER KEY"
+pcreate_key --update=$keyid "73  7475 66  66  " -x user wibble @s
 
 # read back what we put in it
 marker "PRINT PAYLOAD"
@@ -21,15 +29,7 @@ expect_payload payload "stuff"
 
 # check that we can update a user key
 marker "UPDATE USER KEY"
-pcreate_key lizard user wibble @s
-
-# check we get the same key ID back
-expect_keyid keyid2
-
-if [ "x$keyid" != "x$keyid2" ]
-then
-    failed
-fi
+pcreate_key --update=$keyid lizard user wibble @s
 
 # read back what we changed it to
 marker "PRINT UPDATED PAYLOAD"
@@ -54,22 +54,19 @@ then
     fi
 
     marker "ADD LARGE USER KEY"
-    pcreate_key_by_size 32767 user large @s
-    expect_keyid keyid
+    pcreate_key_by_size --new=keyid 32767 user large @s
     md5sum_key $keyid
     expect_payload payload "f128f774ede3fe931e7c6745c4292f40"
 
     if [ $have_big_key_type = 1 ]
     then
 	marker "ADD SMALL BIG KEY"
-	pcreate_key_by_size 128 big_key small @s
-	expect_keyid keyid
+	pcreate_key_by_size --new=keyid 128 big_key small @s
 	md5sum_key $keyid
 	expect_payload payload "f09f35a5637839458e462e6350ecbce4"
 
 	marker "ADD HUGE BIG KEY"
-	pcreate_key_by_size $((1024*1024-1)) big_key huge @s
-	expect_keyid keyid
+	pcreate_key_by_size --new=keyid $((1024*1024-1)) big_key huge @s
 	md5sum_key $keyid
 	expect_payload payload "e57598cd670284cf7d09e16ed9d4b2ac"
     fi

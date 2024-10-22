@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <ctype.h>
 
 #define	MAX_VLS			15	/* Max Volume Location Servers Per-Cell */
 #define	INET_IP4_ONLY		0x1
@@ -42,6 +43,7 @@
 extern key_serial_t key;
 extern int debug_mode;
 extern unsigned mask;
+extern unsigned int key_expiry;
 
 #define N_PAYLOAD 256
 extern struct iovec payload[N_PAYLOAD];
@@ -51,6 +53,8 @@ extern __attribute__((format(printf, 1, 2), noreturn))
 void error(const char *fmt, ...);
 extern __attribute__((format(printf, 1, 2)))
 void _error(const char *fmt, ...);
+extern __attribute__((format(printf, 1, 2)))
+void warning(const char *fmt, ...);
 extern __attribute__((format(printf, 1, 2)))
 void info(const char *fmt, ...);
 extern __attribute__((noreturn))
