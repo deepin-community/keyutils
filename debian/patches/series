@@ -7,3 +7,4 @@ man-page-fixes.patch
 Tests-for-KEYCTL_MOVE-require-kernel-5.3-or-above.patch
 Mark-test-requiring-root-as-such.patch
 1070012-root.patch
+0001-deepin-sw_64-support.diff
