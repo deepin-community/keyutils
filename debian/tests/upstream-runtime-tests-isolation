@@ -9,40 +9,6 @@ cp -r tests "$AUTOPKGTEST_TMP/upstream-runtime-tests-isolation"
 cd "$AUTOPKGTEST_TMP/upstream-runtime-tests-isolation"
 set +e
 
-# Clean out tests not requiring machine-isolation, as these are performed by
-# upstream-runtime-tests
-# As of v1.6, this leaves "padd" and "requesting" as tests requiring
-# machine-isolation
-for testname in \
-				add \
-				clear \
-				describing \
-				dh_compute \
-				id \
-				instantiating \
-				invalidate \
-				link \
-				listing \
-				move \
-				newring \
-				noargs \
-				permitting \
-				pupdate \
-				reading \
-				restrict \
-				revoke \
-				search \
-				session \
-				show \
-				supports \
-				timeout \
-				unlink \
-				update \
-				watch
-do
-	rm -rf keyctl/$testname
-done
-
 make run
 
 # Save all test output files so that they can be accessed from ci.debian.net

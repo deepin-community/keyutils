@@ -1,3 +1,32 @@
+keyutils (1.6.3-6) unstable; urgency=medium
+
+  * Cherry-pick three patches from upstream HEAD.
+    These are the only meaningful changes since 1.6.3, and cherry-picking
+    them seems less complicated than then +git approach.
+  * Add test-Don-t-rely-on-PAGE_SIZE-for-maxdesc-length.patch (Closes: #1102918)
+
+ -- Christian Kastner <ckk@debian.org>  Sun, 13 Apr 2025 12:23:08 +0200
+
+keyutils (1.6.3-5) unstable; urgency=medium
+
+  * Thanks to Aurelien, Chris and Jochen for the previous fixes.
+
+  * Replace patch for maxsquota lookup in containers
+    The new approach preserve's upstream intention a bit closer, even if it
+    doesn't make much of a difference in practice.
+  * autopkgtest: Run all tests as root, instead of just a subset.
+  * Enable Salsa CI using default template
+
+ -- Christian Kastner <ckk@debian.org>  Fri, 04 Apr 2025 12:47:55 +0200
+
+keyutils (1.6.3-4) unstable; urgency=medium
+
+  * Team upload.
+  * Drop patch from #1070012
+  * Disable page size check during test
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Thu, 24 Oct 2024 14:29:21 +0200
+
 keyutils (1.6.3-3.1) unstable; urgency=medium
 
   * Non-maintainer upload.

@@ -1,0 +1,29 @@
+From: Christian Kastner <ckk@kvr.at>
+Date: Fri, 4 Apr 2025 12:39:44 +0200
+Subject: test: Ensure maxsquota is set correctly
+
+Based on a fix provided by Aurelien Jarno, we check for the quota of the
+invoking user, rather than root. And we set it to 0 if quota lookup
+fails for some reason.
+
+Discovered when running tests in containers.
+---
+ tests/toolbox.inc.sh | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/tests/toolbox.inc.sh b/tests/toolbox.inc.sh
+index 609a6c7..8b544f0 100644
+--- a/tests/toolbox.inc.sh
++++ b/tests/toolbox.inc.sh
+@@ -45,7 +45,10 @@ fi
+ 
+ maxcall=$fullpage
+ 
+-maxsquota=`grep '^ *0': /proc/key-users | sed s@.*/@@`
++maxsquota=`grep "^ *$UID": /proc/key-users | sed s@.*/@@`
++if [ -z "$maxsquota" ]; then
++    maxsquota=0
++fi
+ 
+ key_gc_delay_file="/proc/sys/kernel/keys/gc_delay"
+ if [ -f $key_gc_delay_file ]; then

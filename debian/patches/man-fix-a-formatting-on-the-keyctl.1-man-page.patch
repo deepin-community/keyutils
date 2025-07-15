@@ -1,0 +1,45 @@
+From: Vladis Dronov <vdronov@redhat.com>
+Date: Tue, 10 May 2022 13:04:44 +0200
+Subject: man: fix a formatting on the keyctl.1 man page
+
+Fix a formatting and a command output on
+the keyctl.1 man page in a couple of places.
+
+Signed-off-by: Vladis Dronov <vdronov@redhat.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
+Link: https://lore.kernel.org/r/20220510110444.14192-1-vdronov@redhat.com/
+Origin: https://web.git.kernel.org/pub/scm/linux/kernel/git/dhowells/keyutils.git/commit/?id=81a8c963db50681c7470dcfe8fe6c79a70d7aadd
+---
+ man/keyctl.1 | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/man/keyctl.1 b/man/keyctl.1
+index 2343762..c1d067f 100644
+--- a/man/keyctl.1
++++ b/man/keyctl.1
+@@ -302,7 +302,7 @@ The \fBpadd\fR variant of the command reads the data from stdin rather than
+ taking it from the command line:
+ 
+ .RS
+-.fi
++.nf
+ $ echo \-n stuff | keyctl padd user mykey @u
+ 26
+ .fi
+@@ -499,6 +499,7 @@ reject all links.
+ .RS
+ .nf
+ $ keyctl restrict_keyring $1 asymmetric builtin_trusted
++.fi
+ .RE
+ .SS Read a key
+ \fBkeyctl read\fR <key>
+@@ -522,7 +523,7 @@ $ keyctl read 26
+ $ keyctl print 26
+ b
+ $ keyctl pipe 26
+-$
++b$
+ .fi
+ .RE
+ .SS List a keyring
