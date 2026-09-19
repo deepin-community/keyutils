@@ -6,4 +6,8 @@ pkg-config-install-tweaks.patch
 man-page-fixes.patch
 Tests-for-KEYCTL_MOVE-require-kernel-5.3-or-above.patch
 Mark-test-requiring-root-as-such.patch
-1070012-root.patch
+Ensure-maxsquota-is-set-correctly.patch
+man-fix-a-formatting-on-the-keyctl.1-man-page.patch
+Fix-format-specifier-for-pointer-subtraction.patch
+test-Fix-test-expectation-based-on-kernel-config.patch
+test-Don-t-rely-on-PAGE_SIZE-for-maxdesc-length.patch

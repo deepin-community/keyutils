@@ -1,0 +1,39 @@
+From: Alyssa Ross <hi@alyssa.is>
+Date: Wed, 1 Mar 2023 13:42:50 +0000
+Subject: Fix format specifier for pointer subtraction
+
+Resolves the following compiler error:
+
+keyctl_watch.c: In function 'consumer':
+keyctl_watch.c:177:61: error: format '%zx' expects argument of type 'size_t', but argument 3 has type 'int' [-Werror=format=]
+  177 |                                 fprintf(stderr, "NOTIFY[%03zx]: ty=%06x sy=%02x i=%08x\n",
+      |                                                         ~~~~^
+      |                                                             |
+      |                                                             long unsigned int
+      |                                                         %03x
+  178 |                                         p - buffer, n.n.type, n.n.subtype, n.n.info);
+      |                                         ~~~~~~~~~~
+      |                                           |
+      |                                           int
+
+Signed-off-by: Alyssa Ross <hi@alyssa.is>
+Signed-off-by: David Howells <dhowells@redhat.com>
+Link: https://lore.kernel.org/r/20230301134250.301819-1-hi@alyssa.is/
+Origin: https://web.git.kernel.org/pub/scm/linux/kernel/git/dhowells/keyutils.git/commit/?id=ac2d0f3340a819362da460a35dc8e0cd81c0e004
+---
+ keyctl_watch.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/keyctl_watch.c b/keyctl_watch.c
+index a70a19a..1436c08 100644
+--- a/keyctl_watch.c
++++ b/keyctl_watch.c
+@@ -179,7 +179,7 @@ int consumer(FILE *log, FILE *gc, int fd)
+ 			memcpy(&n, p, largest);
+ 
+ 			if (debug)
+-				fprintf(stderr, "NOTIFY[%03zx]: ty=%06x sy=%02x i=%08x\n",
++				fprintf(stderr, "NOTIFY[%03tx]: ty=%06x sy=%02x i=%08x\n",
+ 					p - buffer, n.n.type, n.n.subtype, n.n.info);
+ 
+ 			len = n.n.info & WATCH_INFO_LENGTH;
