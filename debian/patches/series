@@ -6,4 +6,4 @@ pkg-config-install-tweaks.patch
 man-page-fixes.patch
 Tests-for-KEYCTL_MOVE-require-kernel-5.3-or-above.patch
 Mark-test-requiring-root-as-such.patch
-1070012-root.patch
+Disable-page-size-check-during-test.patch

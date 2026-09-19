@@ -1,3 +1,11 @@
+keyutils (1.6.3-4) unstable; urgency=medium
+
+  * Team upload.
+  * Drop patch from #1070012
+  * Disable page size check during test
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Thu, 24 Oct 2024 14:29:21 +0200
+
 keyutils (1.6.3-3.1) unstable; urgency=medium
 
   * Non-maintainer upload.

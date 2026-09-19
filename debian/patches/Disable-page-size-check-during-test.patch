@@ -1,0 +1,50 @@
+From: Jochen Sprickerhof <jspricke@debian.org>
+Date: Thu, 24 Oct 2024 14:14:02 +0200
+Subject: Disable page size check during test
+
+This fixes the build on ppc64el
+---
+ tests/keyctl/add/bad-args/runtest.sh     | 2 +-
+ tests/keyctl/newring/bad-args/runtest.sh | 2 +-
+ tests/keyctl/padd/bad-args/runtest.sh    | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/tests/keyctl/add/bad-args/runtest.sh b/tests/keyctl/add/bad-args/runtest.sh
+index 69121b2..cce2e1f 100644
+--- a/tests/keyctl/add/bad-args/runtest.sh
++++ b/tests/keyctl/add/bad-args/runtest.sh
+@@ -40,7 +40,7 @@ create_key --fail keyring wibble a @p
+ expect_error EINVAL
+ 
+ # check that an max length key description works correctly (PAGE_SIZE inc NUL)
+-if [ $PAGE_SIZE -lt $maxsquota ]
++if [ 1 ]
+ then
+     marker "CHECK MAXLEN DESC"
+     create_key --new=keyid user $maxdesc stuff @s
+diff --git a/tests/keyctl/newring/bad-args/runtest.sh b/tests/keyctl/newring/bad-args/runtest.sh
+index f35c4c6..0691d57 100644
+--- a/tests/keyctl/newring/bad-args/runtest.sh
++++ b/tests/keyctl/newring/bad-args/runtest.sh
+@@ -10,7 +10,7 @@ result=PASS
+ echo "++++ BEGINNING TEST" >$OUTPUTFILE
+ 
+ # check that an max length key description works correctly (4096 inc NUL)
+-if [ $PAGE_SIZE -lt $maxsquota ]
++if [ 1 ]
+ then
+     marker "CHECK MAXLEN DESC"
+     create_keyring --new=keyid $maxdesc @s
+diff --git a/tests/keyctl/padd/bad-args/runtest.sh b/tests/keyctl/padd/bad-args/runtest.sh
+index c59393c..84dbe31 100644
+--- a/tests/keyctl/padd/bad-args/runtest.sh
++++ b/tests/keyctl/padd/bad-args/runtest.sh
+@@ -40,7 +40,7 @@ pcreate_key --fail stuff keyring wibble @p
+ expect_error EINVAL
+ 
+ # check that an max length key description works correctly
+-if [ $PAGE_SIZE -lt $maxsquota ]
++if [ 1 ]
+ then
+     marker "CHECK MAXLEN DESC"
+     pcreate_key --new=keyid stuff user $maxdesc @s
